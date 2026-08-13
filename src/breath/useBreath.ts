@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { prefersReduced, subscribeMotion } from '../lib/motion';
 
 /**
  * Global breath clock (§5). ONE shared clock for the whole app so the water,
@@ -20,9 +21,6 @@ function breathAt(seconds: number): number {
   const t = seconds % CYCLE;
   return t < INHALE ? ease(t / INHALE) : 1 - ease((t - INHALE) / EXHALE);
 }
-
-const prefersReduced = () =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let value = 0.5;
 let raf = 0;
@@ -51,6 +49,18 @@ if (typeof document !== 'undefined') {
     else if (listeners.size) ensureRunning();
   });
 }
+
+// React to a reduced-motion change (system or in-app override): freeze at rest,
+// or resume the shared clock.
+subscribeMotion(() => {
+  if (prefersReduced()) {
+    stop();
+    value = 0.5;
+    listeners.forEach((l) => l());
+  } else if (listeners.size) {
+    ensureRunning();
+  }
+});
 
 function subscribe(cb: () => void) {
   listeners.add(cb);

@@ -134,6 +134,15 @@ body {
   pointer-events: none;
   background: radial-gradient(120% 90% at 50% 42%, transparent 40%, rgba(4, 12, 17, 0.55) 100%);
 }
+/* Subtle center scrim — lifts contrast of centered text over the bright glint (§10)
+   without dulling the water at the edges. */
+.center-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(85% 55% at 50% 50%, rgba(6, 19, 26, 0.3), transparent 72%);
+}
 
 /* Native seek slider (§6.4) — accessible + keyboard for free (§10). Gold fill. */
 .seek {
@@ -202,7 +211,8 @@ body {
   flex-direction: column;
 }
 
-/* ---- Reduced-motion: kill all non-essential animation (§2, §10) ---- */
+/* ---- Reduced-motion: kill all non-essential animation (§2, §10) ----
+   Honors the system preference AND the in-app override (data-reduced on <html>). */
 @media (prefers-reduced-motion: reduce) {
   .water-fallback {
     animation: none;
@@ -215,4 +225,15 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+:root[data-reduced] .water-fallback {
+  animation: none;
+}
+:root[data-reduced] *,
+:root[data-reduced] *::before,
+:root[data-reduced] *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }

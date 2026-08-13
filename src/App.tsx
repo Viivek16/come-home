@@ -6,6 +6,8 @@ import FirstRun from './first-run/FirstRun';
 import Hub from './hub/Hub';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
+import { usePrefs } from './store/prefs';
+import { setReduceMotionPref } from './lib/motion';
 
 /**
  * App shell (§4, §11): Living Water + atmosphere mounted ONCE behind everything;
@@ -13,6 +15,12 @@ import { setDepth } from './store/water';
  */
 export default function App() {
   const view = useView();
+  const { reduceMotion } = usePrefs();
+
+  // Apply the persisted reduce-motion override across the app (§10).
+  useEffect(() => {
+    setReduceMotionPref(reduceMotion);
+  }, [reduceMotion]);
 
   // Hub / first-run sit at their own water depth (§4); the session flow manages its own.
   useEffect(() => {

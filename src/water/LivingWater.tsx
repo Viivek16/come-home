@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { breathValue } from '../breath/useBreath';
+import { prefersReduced, useReducedMotion } from '../lib/motion';
 import { targetParams, type WaterParams } from '../store/water';
 
 /**
@@ -49,8 +50,6 @@ void main(){
 
 const GLINT: [number, number, number] = [0.91, 0.788, 0.608]; // champagne (§4)
 const MIN_INTERVAL = 1000 / 40; // ~40fps cap
-const REDUCED = () =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function compile(gl: WebGLRenderingContext, type: number, src: string) {
   const sh = gl.createShader(type)!;
@@ -66,6 +65,7 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
 export default function LivingWater() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [css, setCss] = useState(false); // true → CSS gradient-water fallback
+  const reduced = useReducedMotion(); // re-inits the layer on a runtime toggle
 
   useEffect(() => {
     if (css) return;
@@ -188,7 +188,7 @@ export default function LivingWater() {
       if (document.hidden) {
         cancelAnimationFrame(raf);
         raf = 0;
-      } else if (!REDUCED() && !raf) {
+      } else if (!prefersReduced() && !raf) {
         last = performance.now();
         raf = requestAnimationFrame(frame);
       }
@@ -201,7 +201,7 @@ export default function LivingWater() {
     canvas.addEventListener('webglcontextlost', onLost);
     document.addEventListener('visibilitychange', onVisibility);
 
-    if (!REDUCED()) raf = requestAnimationFrame(frame); // else: single still frame only
+    if (!prefersReduced()) raf = requestAnimationFrame(frame); // else: single still frame only
 
     return () => {
       cancelAnimationFrame(raf);
@@ -210,7 +210,7 @@ export default function LivingWater() {
       canvas.removeEventListener('webglcontextlost', onLost);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [css]);
+  }, [css, reduced]);
 
   if (css) return <div className="water-fallback" aria-hidden />;
   return (

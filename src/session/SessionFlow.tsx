@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '../lib/motion';
 import { app } from '../store/app';
 import { setDepth, type DepthGroup } from '../store/water';
 import { session, useSessionState, type Step } from '../store/session';

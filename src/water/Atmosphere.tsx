@@ -6,6 +6,7 @@ export default function Atmosphere() {
   return (
     <>
       <div className="grain" aria-hidden />
+      <div className="center-scrim" aria-hidden />
       <div className="vignette" aria-hidden />
     </>
   );
