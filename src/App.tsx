@@ -1,51 +1,39 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import type { Session } from '@supabase/supabase-js';
-import { useSession } from './lib/auth';
-import { player } from './lib/player';
-import Auth from './screens/Auth';
-import Home from './screens/Home';
-import Category from './screens/Category';
-import Player from './screens/Player';
+import LivingWater from './water/LivingWater';
+import Atmosphere from './water/Atmosphere';
+import Mark from './ui/Mark';
+import Button from './ui/Button';
+import { setDepth, type DepthGroup } from './store/water';
 
-function Routed({ session, onSignIn }: { session: Session | null; onSignIn: () => void }) {
-  const location = useLocation();
-  // Keyed by path → remounts and animates in on each navigation. (framer-motion
-  // 13's AnimatePresence mode="wait" hangs here, so enter-only, no exit.)
-  return (
-    <motion.div
-      key={location.pathname}
-      className="min-h-full"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-    >
-      <Routes location={location}>
-        <Route path="/" element={<Home session={session} onSignIn={onSignIn} />} />
-        <Route path="/category/:slug" element={<Category />} />
-        <Route path="/player/:id" element={<Player />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </motion.div>
-  );
-}
-
+/**
+ * App shell (§4, §11): Living Water + atmosphere mounted ONCE behind everything;
+ * all screens render inside .app-layer above them. The session flow + hub replace
+ * the placeholder below in Phase 3.
+ */
 export default function App() {
-  const { session, loading } = useSession();
-  const [guest, setGuest] = useState(false);
-
-  // Keep the global player's user in sync so progress writes are gated on sign-in.
-  useEffect(() => {
-    player.setUser(session?.user.id ?? null);
-  }, [session]);
-
-  if (loading) return <main className="min-h-full bg-slate-950" />;
-  if (!session && !guest) return <Auth onGuest={() => setGuest(true)} />;
-
   return (
-    <BrowserRouter>
-      <Routed session={session} onSignIn={() => setGuest(false)} />
-    </BrowserRouter>
+    <>
+      <LivingWater />
+      <Atmosphere />
+      <div className="app-layer">
+        <div className="screen items-center justify-center text-center">
+          <Mark size={104} />
+          <h1 className="serif tracked" style={{ fontSize: 'var(--t-2xl)', marginTop: 24 }}>
+            COME HOME
+          </h1>
+          <p className="serif-italic" style={{ color: 'var(--ink-muted)', marginTop: 8 }}>
+            Let's be here, right now.
+          </p>
+
+          {/* TEMP (Phase 2 verify only) — depth toggles, removed in Phase 3 */}
+          <div className="mt-10 flex flex-wrap justify-center gap-2">
+            {(['opening', 'response', 'checkin', 'hub'] as DepthGroup[]).map((g) => (
+              <Button key={g} variant="ghost" onClick={() => setDepth(g)}>
+                {g}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
