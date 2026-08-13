@@ -7,4 +7,7 @@ if (!url || !anonKey) {
   throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in environment');
 }
 
-export const supabase = createClient(url, anonKey);
+// persistSession/autoRefreshToken are on by default; set explicit so intent is clear.
+export const supabase = createClient(url, anonKey, {
+  auth: { persistSession: true, autoRefreshToken: true },
+});
