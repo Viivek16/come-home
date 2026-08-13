@@ -15,6 +15,7 @@
     "@capgo/capacitor-media-session": "^8.0.29",
     "@supabase/supabase-js": "^2.112.3",
     "framer-motion": "^13.1.0",
+    "idb-keyval": "^6.3.0",
     "lottie-react": "^2.4.1",
     "lottie-web": "^5.13.0",
     "lucide-react": "^1.31.0",

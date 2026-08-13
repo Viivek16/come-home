@@ -4,6 +4,7 @@ import { app } from '../store/app';
 import { setDepth, type DepthGroup } from '../store/water';
 import { session, useSessionState, type Step } from '../store/session';
 import { audioControls } from '../audio/audioStore';
+import { addHistory } from '../lib/storage';
 import Opening from './screens/Opening';
 import Arrival from './screens/Arrival';
 import Response from './screens/Response';
@@ -28,7 +29,7 @@ const CALMER: Step[] = ['support', 'music', 'checkin', 'return'];
 
 /** The core session loop as one explicit state machine (§6, §11). */
 export default function SessionFlow() {
-  const { step } = useSessionState();
+  const { step, emotion, checkins } = useSessionState();
   const reduce = useReducedMotion();
 
   useEffect(() => {
@@ -39,6 +40,12 @@ export default function SessionFlow() {
     audioControls.stop();
     session.reset();
     app.setView('hub');
+  };
+
+  // Save the completed session to on-device history (§8), then land on the hub.
+  const finishAndExit = () => {
+    void addHistory({ ts: Date.now(), emotion, checkins });
+    toHub();
   };
 
   const screen = (() => {
@@ -56,7 +63,7 @@ export default function SessionFlow() {
       case 'checkin':
         return <CheckIn />;
       case 'return':
-        return <Return onExit={toHub} />;
+        return <Return onExit={finishAndExit} />;
     }
   })();
 

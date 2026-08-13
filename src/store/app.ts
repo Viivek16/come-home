@@ -1,12 +1,13 @@
 import { useSyncExternalStore } from 'react';
+import { firstRunDone } from '../lib/storage';
 
 /**
- * Top-level view (§11). first-run (once) → session loop ↔ hub. Kept tiny; Phase 5
- * seeds the initial value from the persisted first-run flag.
+ * Top-level view (§11). first-run (once) → session loop ↔ hub. Returning users
+ * land on the hub; new users see first-run.
  */
 export type View = 'first-run' | 'session' | 'hub';
 
-let view: View = 'session';
+let view: View = firstRunDone() ? 'hub' : 'first-run';
 const listeners = new Set<() => void>();
 
 export const app = {

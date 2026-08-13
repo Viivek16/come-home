@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import LivingWater from './water/LivingWater';
 import Atmosphere from './water/Atmosphere';
 import SessionFlow from './session/SessionFlow';
+import FirstRun from './first-run/FirstRun';
 import Button from './ui/Button';
 import { app, useView } from './store/app';
 import { setDepth } from './store/water';
@@ -14,9 +15,10 @@ import { session } from './store/session';
 export default function App() {
   const view = useView();
 
-  // Hub sits at its own water depth (§4); the session flow manages its own.
+  // Hub / first-run sit at their own water depth (§4); the session flow manages its own.
   useEffect(() => {
     if (view === 'hub') setDepth('hub');
+    else if (view === 'first-run') setDepth('opening');
   }, [view]);
 
   return (
@@ -24,7 +26,7 @@ export default function App() {
       <LivingWater />
       <Atmosphere />
       <div className="app-layer">
-        {view === 'session' ? <SessionFlow /> : <HubPlaceholder />}
+        {view === 'first-run' ? <FirstRun /> : view === 'session' ? <SessionFlow /> : <HubPlaceholder />}
       </div>
     </>
   );
