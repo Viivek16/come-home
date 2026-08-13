@@ -1,39 +1,55 @@
+import { useEffect } from 'react';
 import LivingWater from './water/LivingWater';
 import Atmosphere from './water/Atmosphere';
-import Mark from './ui/Mark';
+import SessionFlow from './session/SessionFlow';
 import Button from './ui/Button';
-import { setDepth, type DepthGroup } from './store/water';
+import { app, useView } from './store/app';
+import { setDepth } from './store/water';
+import { session } from './store/session';
 
 /**
  * App shell (§4, §11): Living Water + atmosphere mounted ONCE behind everything;
- * all screens render inside .app-layer above them. The session flow + hub replace
- * the placeholder below in Phase 3.
+ * the current view renders inside .app-layer above them.
  */
 export default function App() {
+  const view = useView();
+
+  // Hub sits at its own water depth (§4); the session flow manages its own.
+  useEffect(() => {
+    if (view === 'hub') setDepth('hub');
+  }, [view]);
+
   return (
     <>
       <LivingWater />
       <Atmosphere />
       <div className="app-layer">
-        <div className="screen items-center justify-center text-center">
-          <Mark size={104} />
-          <h1 className="serif tracked" style={{ fontSize: 'var(--t-2xl)', marginTop: 24 }}>
-            COME HOME
-          </h1>
-          <p className="serif-italic" style={{ color: 'var(--ink-muted)', marginTop: 8 }}>
-            Let's be here, right now.
-          </p>
-
-          {/* TEMP (Phase 2 verify only) — depth toggles, removed in Phase 3 */}
-          <div className="mt-10 flex flex-wrap justify-center gap-2">
-            {(['opening', 'response', 'checkin', 'hub'] as DepthGroup[]).map((g) => (
-              <Button key={g} variant="ghost" onClick={() => setDepth(g)}>
-                {g}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {view === 'session' ? <SessionFlow /> : <HubPlaceholder />}
       </div>
     </>
+  );
+}
+
+// Phase 6 replaces this with the real hub + tab bar.
+function HubPlaceholder() {
+  return (
+    <div className="screen items-center justify-center text-center">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center">
+        <div className="eyebrow">Home</div>
+        <p className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 8 }}>
+          You're not alone in this.
+        </p>
+        <div className="mt-10">
+          <Button
+            onClick={() => {
+              session.reset();
+              app.setView('session');
+            }}
+          >
+            Come Home now
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

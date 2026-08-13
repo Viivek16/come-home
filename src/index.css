@@ -40,10 +40,12 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-html,
+html {
+  height: 100%;
+}
 body,
 #root {
-  height: 100%;
+  min-height: 100%; /* grow + scroll when a screen is taller than the viewport (§10, 360px) */
 }
 
 body {
@@ -133,6 +135,22 @@ body {
   background: radial-gradient(120% 90% at 50% 42%, transparent 40%, rgba(4, 12, 17, 0.55) 100%);
 }
 
+/* Guided lines fade in over the water (§6.4) */
+@keyframes line-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.guided-line {
+  opacity: 0;
+  animation: line-in 1.4s var(--ease-calm) forwards;
+}
+
 /* CSS gradient-water fallback (§4) — used when WebGL is unavailable. */
 .water-fallback {
   position: fixed;
@@ -174,6 +192,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }

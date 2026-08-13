@@ -5,7 +5,7 @@ import { useBreath } from '../breath/useBreath';
  * glow brightens on the shared breath clock, so splash / opening / return all
  * breathe as one organism. Decorative → aria-hidden.
  */
-export default function Mark({ size = 88 }: { size?: number }) {
+export default function Mark({ size = 88, variant = 'lotus' }: { size?: number; variant?: 'lotus' | 'heart' }) {
   const b = useBreath(); // 0..1
   const scale = 1 + b * 0.1;
   const glow = 0.28 + b * 0.32;
@@ -34,16 +34,29 @@ export default function Mark({ size = 88 }: { size?: number }) {
         fill="none"
         style={{ transform: `scale(${scale})`, transition: 'transform 120ms linear', position: 'relative' }}
       >
-        {/* still-water line */}
-        <path d="M18 68 Q50 74 82 68" stroke="var(--gold)" strokeWidth="1.1" strokeLinecap="round" opacity="0.7" />
-        {/* lotus petals */}
-        <g stroke="var(--gold)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
-          <path d="M50 66 C50 44 50 34 50 24 C50 34 50 44 50 66Z" opacity="0.95" />
-          <path d="M50 66 C42 48 36 40 30 34 C34 44 40 56 50 66Z" opacity="0.85" />
-          <path d="M50 66 C58 48 64 40 70 34 C66 44 60 56 50 66Z" opacity="0.85" />
-          <path d="M50 66 C36 54 26 50 18 48 C28 56 38 62 50 66Z" opacity="0.7" />
-          <path d="M50 66 C64 54 74 50 82 48 C72 56 62 62 50 66Z" opacity="0.7" />
-        </g>
+        {variant === 'heart' ? (
+          <path
+            d="M50 74 C30 60 20 48 20 37 C20 29 26 24 33 24 C40 24 45 29 50 36 C55 29 60 24 67 24 C74 24 80 29 80 37 C80 48 70 60 50 74Z"
+            stroke="var(--gold)"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+            fill="none"
+            opacity="0.95"
+          />
+        ) : (
+          <>
+            {/* still-water line */}
+            <path d="M18 68 Q50 74 82 68" stroke="var(--gold)" strokeWidth="1.1" strokeLinecap="round" opacity="0.7" />
+            {/* lotus petals */}
+            <g stroke="var(--gold)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+              <path d="M50 66 C50 44 50 34 50 24 C50 34 50 44 50 66Z" opacity="0.95" />
+              <path d="M50 66 C42 48 36 40 30 34 C34 44 40 56 50 66Z" opacity="0.85" />
+              <path d="M50 66 C58 48 64 40 70 34 C66 44 60 56 50 66Z" opacity="0.85" />
+              <path d="M50 66 C36 54 26 50 18 48 C28 56 38 62 50 66Z" opacity="0.7" />
+              <path d="M50 66 C64 54 74 50 82 48 C72 56 62 62 50 66Z" opacity="0.7" />
+            </g>
+          </>
+        )}
       </svg>
     </div>
   );
