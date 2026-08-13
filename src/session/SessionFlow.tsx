@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { app } from '../store/app';
 import { setDepth, type DepthGroup } from '../store/water';
 import { session, useSessionState, type Step } from '../store/session';
+import { audioControls } from '../audio/audioStore';
 import Opening from './screens/Opening';
 import Arrival from './screens/Arrival';
 import Response from './screens/Response';
@@ -35,6 +36,7 @@ export default function SessionFlow() {
   }, [step]);
 
   const toHub = () => {
+    audioControls.stop();
     session.reset();
     app.setView('hub');
   };

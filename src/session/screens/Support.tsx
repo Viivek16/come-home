@@ -1,14 +1,23 @@
+import { useEffect } from 'react';
 import { session, useSessionState } from '../../store/session';
 import { pathTitle } from '../../data/paths';
+import { audioControls, SESSION_AUDIO } from '../../audio/audioStore';
+import Transport from '../../audio/Transport';
 import Button from '../../ui/Button';
 
-// Phase 3 stub: header + guided lines + caption are permanent; the audio transport
-// (play/pause, ±10s, progress) is wired in Phase 4 (§7).
+// Guided voice layer drops in later (§7); the music track carries the session now.
 const LINES = ['Feel your feet.', 'Feel this breath.', "You're safe here."];
 
-/** §6.4 Support (player). Guided lines fade in over the water. */
+/** §6.4 Support (player). Guided lines fade in over the water; transport below. */
 export default function Support() {
   const { path } = useSessionState();
+
+  // Load once on entry (no autoplay — Android policy: playback starts on the
+  // user's tap in Transport). Position is preserved into the Music screen.
+  useEffect(() => {
+    audioControls.ensureLoaded(SESSION_AUDIO.musicTrack);
+  }, []);
+
   return (
     <div className="screen">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
@@ -19,7 +28,7 @@ export default function Support() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6 text-center">
           {LINES.map((l, i) => (
             <p
               key={l}
@@ -31,11 +40,14 @@ export default function Support() {
           ))}
         </div>
 
-        <p style={{ color: 'var(--ink-muted)', textAlign: 'center', fontSize: 'var(--t-sm)' }}>
+        <Transport />
+        <p style={{ color: 'var(--ink-muted)', textAlign: 'center', fontSize: 'var(--t-sm)', marginTop: 14 }}>
           Music continues after voice.
         </p>
-        <div className="mt-6 flex justify-center">
-          <Button onClick={() => session.go('music')}>Continue</Button>
+        <div className="mt-5 flex justify-center">
+          <Button variant="ghost" onClick={() => session.go('music')}>
+            Stay with the sound →
+          </Button>
         </div>
       </div>
     </div>
