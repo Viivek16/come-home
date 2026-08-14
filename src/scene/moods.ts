@@ -9,6 +9,8 @@ export type Palette = {
   body: { kind: 'sun' | 'moon'; x: number; y: number; color: string; r: number };
   stars: number; // 0 = none
   clouds: boolean;
+  birds: number; // drifting birds (morning/day)
+  leaves: number; // falling leaves (day/dusk)
   ridgeFar: string;
   ridgeNear: string;
   tree: string;
@@ -23,6 +25,8 @@ export const MOODS: Record<Mood, Palette> = {
     body: { kind: 'sun', x: 74, y: 60, color: '#F4DDB4', r: 15 },
     stars: 10,
     clouds: true,
+    birds: 3,
+    leaves: 0,
     ridgeFar: '#274a58',
     ridgeNear: '#12303c',
     tree: '#0c2028',
@@ -35,6 +39,8 @@ export const MOODS: Record<Mood, Palette> = {
     body: { kind: 'sun', x: 78, y: 40, color: '#FBEBC8', r: 13 },
     stars: 0,
     clouds: true,
+    birds: 2,
+    leaves: 5,
     ridgeFar: '#356072',
     ridgeNear: '#173a48',
     tree: '#102a34',
@@ -47,6 +53,8 @@ export const MOODS: Record<Mood, Palette> = {
     body: { kind: 'sun', x: 30, y: 66, color: '#EAC99B', r: 12 },
     stars: 26,
     clouds: false,
+    birds: 0,
+    leaves: 3,
     ridgeFar: '#1e3f4c',
     ridgeNear: '#0e2630',
     tree: '#081b22',
@@ -59,6 +67,8 @@ export const MOODS: Record<Mood, Palette> = {
     body: { kind: 'moon', x: 76, y: 34, color: '#EAF2F2', r: 11 },
     stars: 64,
     clouds: false,
+    birds: 0,
+    leaves: 0,
     ridgeFar: '#132e39',
     ridgeNear: '#08171e',
     tree: '#04101557',

@@ -5,6 +5,7 @@ import { session } from '../../store/session';
 import { app } from '../../store/app';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
+import { PHASE, phaseFor } from '../../lib/greeting';
 
 const today = () =>
   new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -29,10 +30,10 @@ export default function HomeTab() {
         <Reveal delay={0.05}>
           <div className="eyebrow">{today()}</div>
           <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, lineHeight: 1.05, whiteSpace: 'pre-line' }}>
-            Welcome back{prefs.name ? `,\n${prefs.name}` : ''}
+            {PHASE[phaseFor()].hi}{prefs.name ? `,\n${prefs.name}` : ''}
           </h1>
           <p style={{ color: 'var(--ink-muted)', marginTop: 10, fontSize: 'var(--t-md)' }}>
-            You're not alone in this.
+            {PHASE[phaseFor()].sub}
           </p>
         </Reveal>
 

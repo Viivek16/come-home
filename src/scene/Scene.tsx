@@ -4,6 +4,20 @@ import { prefersReduced } from '../lib/motion';
 import { useMood, type Mood } from '../store/scene';
 import { MOODS, STAR_FIELD, type Palette } from './moods';
 
+// Deterministic drift tables so birds/leaves never jump between renders.
+const BIRD_FIELD = [
+  { y: 15, dur: 26, delay: 0 },
+  { y: 22, dur: 34, delay: -12 },
+  { y: 12, dur: 30, delay: -22 },
+];
+const LEAF_FIELD = [
+  { x: 12, dur: 15, delay: 0 },
+  { x: 34, dur: 19, delay: -6 },
+  { x: 58, dur: 17, delay: -11 },
+  { x: 76, dur: 21, delay: -3 },
+  { x: 90, dur: 16, delay: -14 },
+];
+
 /**
  * Illustrated scene (§ redesign). Layered SVG landscape — sky glow, sun/moon,
  * stars, drifting clouds, mountain + pine silhouettes — framing the Living Water
@@ -58,6 +72,15 @@ function SceneArt({ palette }: { palette: Palette }) {
           <span className="scene-cloud" style={{ top: '30%', width: 100, height: 22, animationDuration: '120s', animationDelay: '-40s', opacity: 0.5 }} />
         </>
       )}
+      {/* birds — drift across the sky, wings flapping (morning/day) */}
+      {p.birds > 0 &&
+        BIRD_FIELD.slice(0, p.birds).map((bd, i) => (
+          <span key={i} className="scene-bird" style={{ top: `${bd.y}%`, animationDuration: `${bd.dur}s`, animationDelay: `${bd.delay}s` }}>
+            <svg width="18" height="8" viewBox="0 0 18 8" className="scene-bird-wing" aria-hidden>
+              <path d="M1 6 Q5 1 9 6 Q13 1 17 6" stroke="rgba(234,242,242,0.5)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
       {/* sun / moon + glow */}
       <div
         style={{
@@ -116,6 +139,11 @@ function SceneArt({ palette }: { palette: Palette }) {
           <path key={i} d={`M${x} 40 L${x - 2} 34 L${x} 30 L${x + 2} 34 Z`} fill={p.tree} />
         ))}
       </svg>
+      {/* falling leaves — drift down toward the water (day/dusk) */}
+      {p.leaves > 0 &&
+        LEAF_FIELD.slice(0, p.leaves).map((lf, i) => (
+          <span key={i} className="scene-leaf" style={{ left: `${lf.x}%`, animationDuration: `${lf.dur}s`, animationDelay: `${lf.delay}s` }} />
+        ))}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useAudio, audioControls } from './audioStore';
 
 const fmt = (s: number) => {
@@ -29,6 +30,7 @@ function SkipButton({ dir, onClick }: { dir: 'back' | 'fwd'; onClick: () => void
  *  glow, circular glass ±10s, thin gold seek. Native range = keyboard seek (§10). */
 export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
   const { playing, position, duration, error } = useAudio();
+  const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
@@ -77,6 +79,7 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
         <input
           type="range"
           className="seek"
+          style={{ '--seek-pct': `${pct}%` } as CSSProperties}
           min={0}
           max={duration || 0}
           step={1}

@@ -10,6 +10,7 @@ import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
 import { ambient } from './audio/ambient';
+import { useAppHistory } from './nav/history';
 
 /**
  * App shell (§4, §11): Living Water + atmosphere mounted ONCE behind everything;
@@ -18,6 +19,9 @@ import { ambient } from './audio/ambient';
 export default function App() {
   const view = useView();
   const { reduceMotion, ambientMuted } = usePrefs();
+
+  // Keep hardware/browser Back inside the app (only Home-screen Back exits).
+  useAppHistory();
 
   // Apply the persisted reduce-motion override across the app (§10).
   useEffect(() => {

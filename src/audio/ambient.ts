@@ -4,8 +4,8 @@
  * Starts on the first user gesture (autoplay policy), ducks under the session
  * audio, mutes via the persisted pref, and suspends when the tab is hidden.
  */
-const BASE = 0.055; // resting volume — deliberately very low
-const DUCK = 0.012; // while the meditation audio is playing
+const BASE = 0.075; // resting volume — present but gentle
+const DUCK = 0.02; // while the meditation audio is playing
 
 const AC: typeof AudioContext | undefined =
   typeof window !== 'undefined' ? window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext : undefined;
@@ -60,6 +60,39 @@ function build() {
   lfo.connect(lfoGain);
   lfoGain.connect(filter.frequency);
   lfo.start();
+
+  // Soft filtered-noise wash — a distant water/air texture beneath the pad, its
+  // band slowly swept so it flows rather than hisses.
+  const noiseLen = Math.floor(ctx.sampleRate * 4);
+  const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  let brown = 0;
+  for (let i = 0; i < noiseLen; i++) {
+    brown = (brown + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+    nd[i] = brown * 3.2;
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuf;
+  noise.loop = true;
+  const nFilter = ctx.createBiquadFilter();
+  nFilter.type = 'bandpass';
+  nFilter.frequency.value = 470;
+  nFilter.Q.value = 0.7;
+  const nGain = ctx.createGain();
+  nGain.gain.value = 0.16;
+  noise.connect(nFilter);
+  nFilter.connect(nGain);
+  nGain.connect(master);
+
+  const nLfo = ctx.createOscillator();
+  nLfo.type = 'sine';
+  nLfo.frequency.value = 0.06;
+  const nLfoGain = ctx.createGain();
+  nLfoGain.gain.value = 190;
+  nLfo.connect(nLfoGain);
+  nLfoGain.connect(nFilter.frequency);
+  noise.start();
+  nLfo.start();
 }
 
 export const ambient = {

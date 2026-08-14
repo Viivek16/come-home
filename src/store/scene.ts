@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { useDepth, type DepthGroup } from './water';
+import { phaseMood } from '../lib/greeting';
 
 /**
  * Scene mood (illustrated backdrop). Defaults to 'auto' — derived from the water
@@ -24,16 +25,41 @@ function useOverride(): Mood | null {
   );
 }
 
+// The guided session keeps its own dawn→dusk emotional arc; only the hub tracks
+// the wall clock (that's where "Good morning" lives).
 const FROM_DEPTH: Record<DepthGroup, Mood> = {
   opening: 'dawn',
   response: 'dusk',
   checkin: 'dusk',
-  hub: 'day',
+  hub: 'day', // overridden by the clock in useMood
 };
 
-/** Resolved mood for the current screen (override wins, else derived from depth). */
+// Wall-clock phase, refreshed each minute so an open app crosses dawn/dusk on its
+// own. useSyncExternalStore keeps it out of every component's render path.
+let clockPhaseMood: Mood = phaseMood();
+const clockListeners = new Set<() => void>();
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    const next = phaseMood();
+    if (next === clockPhaseMood) return;
+    clockPhaseMood = next;
+    clockListeners.forEach((l) => l());
+  }, 60_000);
+}
+function useClockMood(): Mood {
+  return useSyncExternalStore(
+    (l) => (clockListeners.add(l), () => clockListeners.delete(l)),
+    () => clockPhaseMood,
+    () => clockPhaseMood,
+  );
+}
+
+/** Resolved mood (override wins → hub follows the clock → else the depth arc). */
 export function useMood(): Mood {
   const depth = useDepth();
   const o = useOverride();
-  return o ?? FROM_DEPTH[depth];
+  const clock = useClockMood();
+  if (o) return o;
+  if (depth === 'hub') return clock;
+  return FROM_DEPTH[depth];
 }

@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '../lib/motion';
-import { app } from '../store/app';
 import { setDepth, type DepthGroup } from '../store/water';
-import { session, useSessionState, type Step } from '../store/session';
-import { audioControls } from '../audio/audioStore';
+import { useSessionState, type Step } from '../store/session';
 import { addHistory } from '../lib/storage';
+import { nav } from '../nav/history';
 import Opening from './screens/Opening';
 import Arrival from './screens/Arrival';
 import Response from './screens/Response';
@@ -37,16 +36,15 @@ export default function SessionFlow() {
     setDepth(DEPTH[step]);
   }, [step]);
 
-  const toHub = () => {
-    audioControls.stop();
-    session.reset();
-    app.setView('hub');
-  };
+  // Leaving a session is a Back: pop the session's history level so hardware/
+  // browser Back and the in-app exits stay in sync (audio stop + reset happen in
+  // the history handler). § this-pass routing fix.
+  const toHub = () => nav.back();
 
   // Save the completed session to on-device history (§8), then land on the hub.
   const finishAndExit = () => {
     void addHistory({ ts: Date.now(), emotion, checkins });
-    toHub();
+    nav.back();
   };
 
   const screen = (() => {

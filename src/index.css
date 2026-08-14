@@ -176,6 +176,62 @@ body {
     transform: translateX(124vw);
   }
 }
+/* Birds drift across the sky; the inner wing element flaps independently. */
+.scene-bird {
+  position: absolute;
+  left: 0;
+  animation: bird-fly linear infinite;
+  will-change: transform;
+}
+.scene-bird-wing {
+  display: block;
+  transform-origin: 50% 50%;
+  animation: bird-flap 0.5s ease-in-out infinite;
+}
+@keyframes bird-fly {
+  from {
+    transform: translate(-12vw, 0);
+  }
+  to {
+    transform: translate(114vw, -5vh);
+  }
+}
+@keyframes bird-flap {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.4);
+  }
+}
+/* Leaves fall from the sky toward the water, swaying and turning as they go. */
+.scene-leaf {
+  position: absolute;
+  top: -4%;
+  width: 7px;
+  height: 9px;
+  border-radius: 0 60% 0 60%;
+  background: rgba(232, 201, 155, 0.5);
+  animation: leaf-fall linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes leaf-fall {
+  0% {
+    transform: translate(0, -4vh) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(4vw, 26vh) rotate(180deg);
+  }
+  100% {
+    transform: translate(-2vw, 58vh) rotate(360deg);
+    opacity: 0;
+  }
+}
 
 /* ---- Staged reveal (Emil-Kowalski ethos: enter-only, ease-out, staggered) ---- */
 @keyframes reveal-up {
@@ -239,23 +295,52 @@ body {
   background: radial-gradient(85% 55% at 50% 50%, rgba(6, 19, 26, 0.3), transparent 72%);
 }
 
-/* Native seek slider (§6.4) — accessible + keyboard for free (§10). Gold fill. */
+/* Native seek slider (§6.4) — accessible + keyboard for free (§10). Fully custom
+   thumb so the dot sits dead-centre on the thin track (fixes the offset), with a
+   gold played-progress fill driven by the --seek-pct custom property. */
 .seek {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 22px; /* tall hit area; visual track is thin below */
   background: transparent;
-  accent-color: var(--gold);
   cursor: pointer;
 }
 .seek::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 999px;
-  background: var(--hairline);
+  background: linear-gradient(to right, var(--gold) var(--seek-pct, 0%), var(--hairline) var(--seek-pct, 0%));
+}
+.seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -5px; /* centre the 13px dot on the 3px track */
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 4px rgba(232, 201, 155, 0.18), 0 1px 5px rgba(0, 0, 0, 0.45);
 }
 .seek::-moz-range-track {
   height: 3px;
   border-radius: 999px;
   background: var(--hairline);
+}
+.seek::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+.seek::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 4px rgba(232, 201, 155, 0.18);
+}
+.seek:disabled {
+  opacity: 0.5;
 }
 
 /* Guided lines fade in over the water (§6.4) */
