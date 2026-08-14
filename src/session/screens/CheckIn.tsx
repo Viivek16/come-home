@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Chip from '../../ui/Chip';
 import Button from '../../ui/Button';
+import Reveal from '../../ui/Reveal';
 import CrisisResources from '../CrisisResources';
 import { session, shouldOfferSupport, useSessionState, type Checkin } from '../../store/session';
 
@@ -11,8 +12,7 @@ const OPTIONS: { id: Checkin; label: string }[] = [
   { id: 'struggling', label: 'Still struggling' },
 ];
 
-/** §6.6 Gentle check-in. Stored privately. Reveals the soft crisis row when the
- *  session warrants it (§6.6) — never forced, dismissible. */
+/** §6.6 Gentle check-in. Stored privately. Soft crisis row when warranted. */
 export default function CheckIn() {
   const state = useSessionState();
   const [selected, setSelected] = useState<Checkin | null>(null);
@@ -34,30 +34,29 @@ export default function CheckIn() {
   return (
     <div className="screen">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-        <h2 className="serif" style={{ fontSize: 'var(--t-xl)' }}>
-          How are you feeling now?
-        </h2>
-        <p style={{ color: 'var(--ink-muted)', marginTop: 6, marginBottom: 22, fontSize: 'var(--t-md)' }}>
-          There's no right answer.
-        </p>
+        <Reveal delay={0.05}>
+          <h2 className="serif" style={{ fontSize: 'var(--t-xl)' }}>
+            How are you feeling now?
+          </h2>
+          <p style={{ color: 'var(--ink-muted)', marginTop: 6, marginBottom: 22, fontSize: 'var(--t-md)' }}>
+            There's no right answer.
+          </p>
+        </Reveal>
 
         <div className="flex flex-col gap-3">
-          {OPTIONS.map((o) => (
-            <Chip key={o.id} selected={selected === o.id} onClick={() => pick(o.id)}>
-              {o.label}
-            </Chip>
+          {OPTIONS.map((o, i) => (
+            <Reveal key={o.id} delay={0.14 + i * 0.06}>
+              <Chip selected={selected === o.id} onClick={() => pick(o.id)}>
+                {o.label}
+              </Chip>
+            </Reveal>
           ))}
         </div>
 
         {offer && (
-          <div
-            className="glass mt-5 flex items-center gap-3 px-5 py-4"
-            style={{ borderRadius: 'var(--radius-chip)' }}
-          >
+          <div className="glass glass-gold mt-5 flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-chip)' }}>
             <button onClick={() => setShowResources(true)} className="flex-1 text-left">
-              <div style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>
-                If you need more than this right now
-              </div>
+              <div style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>If you need more than this right now</div>
               <div className="eyebrow" style={{ color: 'var(--gold)', marginTop: 6 }}>
                 See support options →
               </div>

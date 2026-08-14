@@ -14,14 +14,19 @@ export default function Button({
   ...rest
 }: { variant?: Variant; children: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) {
   const base =
-    'inline-flex items-center justify-center min-h-[48px] px-7 select-none font-medium transition-[transform,background-color,opacity] duration-300 active:scale-[0.985]';
-  const styles =
+    'inline-flex items-center justify-center min-h-[52px] px-8 select-none font-medium transition-[transform,box-shadow,opacity] duration-300 active:scale-[0.97]';
+  const styles: React.CSSProperties =
     variant === 'primary'
-      ? { background: 'var(--gold)', color: '#10222b', borderRadius: 999 }
+      ? {
+          background: 'linear-gradient(180deg, #F0D6AA, var(--gold-deep))',
+          color: '#11242d',
+          borderRadius: 999,
+          boxShadow: '0 10px 30px rgba(232,201,155,0.28), inset 0 1px 0 rgba(255,255,255,0.5)',
+        }
       : { color: 'var(--ink-muted)', background: 'transparent', borderRadius: 999 };
   return (
     <button
-      className={`${base} ${variant === 'ghost' ? 'hover:opacity-80' : 'hover:brightness-[1.03]'} ${className}`}
+      className={`${base} ${variant === 'ghost' ? 'hover:opacity-80' : 'hover:brightness-[1.04]'} ${className}`}
       style={{ transitionTimingFunction: 'var(--ease-calm)', ...styles }}
       {...rest}
     >

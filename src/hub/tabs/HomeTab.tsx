@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import Button from '../../ui/Button';
+import Reveal from '../../ui/Reveal';
 import { usePrefs } from '../../store/prefs';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 
-/** §6 Home. Welcome + big CTA + a soft recent card. No streaks, no counts. */
+const today = () =>
+  new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** §6 Home. Editorial welcome + big CTA + a soft recent card. No streaks/counts. */
 export default function HomeTab() {
   const prefs = usePrefs();
   const [recent, setRecent] = useState<HistoryEntry | null>(null);
@@ -23,29 +26,47 @@ export default function HomeTab() {
   return (
     <div className="screen">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-        <div className="eyebrow">Home</div>
-        <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 8 }}>
-          Welcome back{prefs.name ? `, ${prefs.name}` : ''} ♡
-        </h1>
-        <p style={{ color: 'var(--ink-muted)', marginTop: 6, fontSize: 'var(--t-md)' }}>
-          You're not alone in this.
-        </p>
+        <Reveal delay={0.05}>
+          <div className="eyebrow">{today()}</div>
+          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, lineHeight: 1.05, whiteSpace: 'pre-line' }}>
+            Welcome back{prefs.name ? `,\n${prefs.name}` : ''}
+          </h1>
+          <p style={{ color: 'var(--ink-muted)', marginTop: 10, fontSize: 'var(--t-md)' }}>
+            You're not alone in this.
+          </p>
+        </Reveal>
 
-        <div className="mt-8">
-          <Button onClick={comeHome}>Come Home now</Button>
-        </div>
-
-        {recent && (
+        <Reveal delay={0.25} className="mt-8">
           <button
             onClick={comeHome}
-            className="glass mt-8 px-5 py-4 text-left transition-opacity duration-300 hover:opacity-90"
-            style={{ borderRadius: 'var(--radius-card)' }}
+            className="glass glass-strong glass-gold w-full px-6 py-6 text-left transition-transform duration-300 active:scale-[0.99]"
+            style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
           >
-            <div className="eyebrow">A moment to return to</div>
-            <div className="serif" style={{ fontSize: 'var(--t-lg)', marginTop: 6 }}>
-              Last time, you arrived {feelingLabel(recent.emotion)}.
+            <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+              A moment for you
+            </div>
+            <div className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 8 }}>
+              Come home now
+            </div>
+            <div style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
+              One breath. Two minutes. Right here.
             </div>
           </button>
+        </Reveal>
+
+        {recent && (
+          <Reveal delay={0.4}>
+            <button
+              onClick={comeHome}
+              className="glass mt-4 w-full px-5 py-4 text-left transition-opacity duration-300 hover:opacity-90"
+              style={{ borderRadius: 'var(--radius-card)' }}
+            >
+              <div className="eyebrow">Return to</div>
+              <div className="serif" style={{ fontSize: 'var(--t-lg)', marginTop: 4 }}>
+                Last time, you arrived {feelingLabel(recent.emotion)}.
+              </div>
+            </button>
+          </Reveal>
         )}
       </div>
     </div>

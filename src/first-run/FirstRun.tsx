@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Mark from '../ui/Mark';
 import Button from '../ui/Button';
+import Reveal from '../ui/Reveal';
 import { app } from '../store/app';
 import { session } from '../store/session';
 import { prefsStore, usePrefs } from '../store/prefs';
@@ -50,7 +51,8 @@ function Welcome() {
   return (
     <div className="screen">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-        <div className="glass" style={{ padding: 26, minHeight: 232 }}>
+        <Reveal delay={0.1}>
+        <div className="glass glass-strong" style={{ padding: 28, minHeight: 236 }}>
           {card === 0 && (
             <p className="serif" style={{ fontSize: 'var(--t-xl)' }}>
               You don't have to be anywhere else.
@@ -84,6 +86,7 @@ function Welcome() {
             </>
           )}
         </div>
+        </Reveal>
 
         {/* progress dots */}
         <div className="mt-6 flex justify-center gap-2" aria-hidden>

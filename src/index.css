@@ -86,16 +86,102 @@ body {
   letter-spacing: 0.14em;
 }
 
-/* ---- Glass surface (§3): all cards are glass over the water ---- */
+/* ---- Liquid glass (redesign): layered frost with inner light + soft depth ---- */
 .glass {
-  background: var(--surface);
+  position: relative;
+  background: linear-gradient(157deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
   border: 1px solid var(--hairline);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(17px) saturate(1.35);
+  -webkit-backdrop-filter: blur(17px) saturate(1.35);
   border-radius: var(--radius-card);
+  box-shadow:
+    0 10px 34px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .glass-strong {
-  background: var(--surface-strong);
+  background: linear-gradient(157deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.07));
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 0 1px rgba(232, 201, 155, 0.05);
+}
+/* Gold-lit glass for the recommended / primary surface */
+.glass-gold {
+  border-color: rgba(232, 201, 155, 0.42);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 26px rgba(232, 201, 155, 0.14);
+}
+
+/* ---- Content bleed: scene melts into the button/option stack (reference #1) ---- */
+.bleed-base {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 19, 26, 0.5) 55%, rgba(6, 15, 21, 0.82) 100%);
+}
+
+/* ---- Scene animations ---- */
+@keyframes scene-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.scene-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #eaf2f2;
+  box-shadow: 0 0 4px rgba(234, 242, 242, 0.8);
+  animation: twinkle 4.5s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+.scene-cloud {
+  position: absolute;
+  left: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(14px);
+  animation: cloud-drift linear infinite;
+}
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-24vw);
+  }
+  to {
+    transform: translateX(124vw);
+  }
+}
+
+/* ---- Staged reveal (Emil-Kowalski ethos: enter-only, ease-out, staggered) ---- */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal {
+  opacity: 0;
+  animation: reveal-up 0.72s var(--ease-calm) forwards;
 }
 
 /* Text scrim — keeps contrast over bright glint (§10). Sits behind text blocks. */

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Reveal from '../../ui/Reveal';
 import { usePrefs, prefsStore } from '../../store/prefs';
 import { getHistory, clearHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
@@ -35,10 +36,12 @@ export default function ProfileTab() {
   return (
     <div className="screen">
       <div className="mx-auto w-full max-w-md py-10">
-        <div className="eyebrow">Profile</div>
-        <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 8, marginBottom: 20 }}>
-          Your journey
-        </h1>
+        <Reveal delay={0.05}>
+          <div className="eyebrow">Profile</div>
+          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 20 }}>
+            Your journey
+          </h1>
+        </Reveal>
 
         {history.length === 0 ? (
           <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)' }}>

@@ -7,6 +7,7 @@ export default function Atmosphere() {
     <>
       <div className="grain" aria-hidden />
       <div className="center-scrim" aria-hidden />
+      <div className="bleed-base" aria-hidden />
       <div className="vignette" aria-hidden />
     </>
   );

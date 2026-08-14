@@ -40,16 +40,28 @@ export default function TabBar({
             key={id}
             onClick={() => onChange(id)}
             aria-current={on ? 'page' : undefined}
-            className="flex flex-1 flex-col items-center gap-1 py-2.5 transition-opacity duration-300"
+            className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-[color,opacity] duration-300"
             style={{
               color: on ? 'var(--gold)' : 'var(--ink-muted)',
-              opacity: on ? 1 : 0.75,
-              minHeight: 56,
+              opacity: on ? 1 : 0.7,
+              minHeight: 58,
               transitionTimingFunction: 'var(--ease-calm)',
             }}
           >
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: 4,
+                width: 44,
+                height: 30,
+                borderRadius: 999,
+                background: on ? 'radial-gradient(circle, rgba(232,201,155,0.22), transparent 70%)' : 'transparent',
+                transition: 'background .35s var(--ease-calm)',
+              }}
+            />
             <Icon size={22} strokeWidth={1.5} />
-            <span style={{ fontSize: 10, letterSpacing: '0.06em' }}>{label}</span>
+            <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
           </button>
         );
       })}

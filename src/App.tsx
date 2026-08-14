@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import LivingWater from './water/LivingWater';
+import Scene from './scene/Scene';
 import Atmosphere from './water/Atmosphere';
 import SessionFlow from './session/SessionFlow';
 import FirstRun from './first-run/FirstRun';
@@ -31,6 +32,7 @@ export default function App() {
   return (
     <>
       <LivingWater />
+      <Scene />
       <Atmosphere />
       <div className="app-layer">
         {view === 'first-run' ? <FirstRun /> : view === 'session' ? <SessionFlow /> : <Hub />}
