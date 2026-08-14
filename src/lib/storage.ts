@@ -18,8 +18,8 @@ const local = (): Storage | null => {
   }
 };
 
-export type Prefs = { name: string; reduceMotion: boolean; voice: string };
-export const DEFAULT_PREFS: Prefs = { name: '', reduceMotion: false, voice: 'default' };
+export type Prefs = { name: string; reduceMotion: boolean; voice: string; ambientMuted: boolean };
+export const DEFAULT_PREFS: Prefs = { name: '', reduceMotion: false, voice: 'default', ambientMuted: false };
 
 export function loadPrefs(): Prefs {
   try {

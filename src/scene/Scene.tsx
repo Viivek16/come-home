@@ -140,7 +140,7 @@ export default function Scene() {
   }, [mood]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} aria-hidden>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.62 }} aria-hidden>
       {layers.map((l, i) => (
         <div
           key={l.id}

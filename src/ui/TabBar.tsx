@@ -1,10 +1,12 @@
 import type { ComponentType } from 'react';
+import { createPortal } from 'react-dom';
 
 export type TabItem = { id: string; label: string; Icon: ComponentType<{ size?: number; strokeWidth?: number }> };
 
 /**
  * Glass bottom tab bar (§6). Gold active state, NO badges, no guilt dots (§2).
- * Controlled — the hub wires `active`/`onChange` to routing.
+ * Portaled to <body> so it is ALWAYS anchored to the viewport bottom — never
+ * captured by an ancestor's transform/filter containing block.
  */
 export default function TabBar({
   items,
@@ -15,16 +17,16 @@ export default function TabBar({
   active: string;
   onChange: (id: string) => void;
 }) {
-  return (
+  return createPortal(
     <nav
-      className="glass app-layer"
+      className="glass"
       aria-label="Sections"
       style={{
         position: 'fixed',
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 5,
+        zIndex: 50,
         borderRadius: 0,
         borderLeft: 'none',
         borderRight: 'none',
@@ -65,6 +67,7 @@ export default function TabBar({
           </button>
         );
       })}
-    </nav>
+    </nav>,
+    document.body,
   );
 }

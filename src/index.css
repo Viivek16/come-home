@@ -120,10 +120,19 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 46%;
+  height: 58%;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(7, 19, 26, 0.5) 55%, rgba(6, 15, 21, 0.82) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 19, 26, 0.5) 42%, rgba(6, 15, 21, 0.82) 74%, rgba(5, 13, 18, 0.94) 100%);
+}
+/* Readability wash — a soft even veil so glass buttons/text always read clearly
+   over the scene without hiding it. */
+.legibility {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(6, 17, 24, 0.28);
 }
 
 /* ---- Scene animations ---- */

@@ -69,34 +69,19 @@ export default function ProfileTab() {
           Settings
         </div>
         <div className="glass mt-3" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
+          <Row label="Background music">
+            <Switch
+              on={!prefs.ambientMuted}
+              label="Background music"
+              onToggle={() => prefsStore.setAmbientMuted(!prefs.ambientMuted)}
+            />
+          </Row>
           <Row label="Reduce motion">
-            <button
-              role="switch"
-              aria-checked={prefs.reduceMotion}
-              aria-label="Reduce motion"
-              onClick={() => prefsStore.setReduceMotion(!prefs.reduceMotion)}
-              style={{
-                width: 46,
-                height: 28,
-                borderRadius: 999,
-                background: prefs.reduceMotion ? 'var(--gold)' : 'var(--hairline)',
-                position: 'relative',
-                transition: 'background-color .3s var(--ease-calm)',
-              }}
-            >
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 3,
-                  left: prefs.reduceMotion ? 21 : 3,
-                  width: 22,
-                  height: 22,
-                  borderRadius: 999,
-                  background: '#10222b',
-                  transition: 'left .3s var(--ease-calm)',
-                }}
-              />
-            </button>
+            <Switch
+              on={prefs.reduceMotion}
+              label="Reduce motion"
+              onToggle={() => prefsStore.setReduceMotion(!prefs.reduceMotion)}
+            />
           </Row>
           <Row label="Voice">
             <span style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}>Default</span>
@@ -135,6 +120,38 @@ export default function ProfileTab() {
         </button>
       </div>
     </div>
+  );
+}
+
+function Switch({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onToggle}
+      style={{
+        width: 46,
+        height: 28,
+        borderRadius: 999,
+        background: on ? 'var(--gold)' : 'var(--hairline)',
+        position: 'relative',
+        transition: 'background-color .3s var(--ease-calm)',
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 3,
+          left: on ? 21 : 3,
+          width: 22,
+          height: 22,
+          borderRadius: 999,
+          background: '#10222b',
+          transition: 'left .3s var(--ease-calm)',
+        }}
+      />
+    </button>
   );
 }
 

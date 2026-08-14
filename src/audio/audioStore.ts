@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { audio } from '../lib/audio';
+import { ambient } from './ambient';
 
 /**
  * Session audio (§7). Local-only, no progress writes. Reuses the single
@@ -40,9 +41,9 @@ function mediaPosition() {
 
 // Wire the element once, at module load — handlers outlive any screen so playback
 // keeps going across the Support → Music transition.
-audio.on('play', () => (emit({ playing: true }), mediaState('playing')));
-audio.on('pause', () => (emit({ playing: false }), mediaState('paused')));
-audio.on('ended', () => (emit({ playing: false }), mediaState('paused')));
+audio.on('play', () => (emit({ playing: true }), mediaState('playing'), ambient.setDucked(true)));
+audio.on('pause', () => (emit({ playing: false }), mediaState('paused'), ambient.setDucked(false)));
+audio.on('ended', () => (emit({ playing: false }), mediaState('paused'), ambient.setDucked(false)));
 audio.on('loadedmetadata', () => emit({ duration: audio.duration, ready: true }));
 audio.on('durationchange', () => emit({ duration: audio.duration }));
 audio.on('timeupdate', () => (emit({ position: audio.currentTime }), mediaPosition()));

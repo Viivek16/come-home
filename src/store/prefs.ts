@@ -16,6 +16,7 @@ export const prefsStore = {
   setName: (name: string) => commit({ name }),
   setReduceMotion: (reduceMotion: boolean) => commit({ reduceMotion }),
   setVoice: (voice: string) => commit({ voice }),
+  setAmbientMuted: (ambientMuted: boolean) => commit({ ambientMuted }),
 };
 
 export function usePrefs(): Prefs {

@@ -5,6 +5,7 @@
 export default function Atmosphere() {
   return (
     <>
+      <div className="legibility" aria-hidden />
       <div className="grain" aria-hidden />
       <div className="center-scrim" aria-hidden />
       <div className="bleed-base" aria-hidden />

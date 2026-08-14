@@ -9,6 +9,7 @@ import { useView } from './store/app';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
+import { ambient } from './audio/ambient';
 
 /**
  * App shell (§4, §11): Living Water + atmosphere mounted ONCE behind everything;
@@ -16,12 +17,26 @@ import { setReduceMotionPref } from './lib/motion';
  */
 export default function App() {
   const view = useView();
-  const { reduceMotion } = usePrefs();
+  const { reduceMotion, ambientMuted } = usePrefs();
 
   // Apply the persisted reduce-motion override across the app (§10).
   useEffect(() => {
     setReduceMotionPref(reduceMotion);
   }, [reduceMotion]);
+
+  // Ambient bed: honor the mute pref, and start it on the first user gesture.
+  useEffect(() => {
+    ambient.setMuted(ambientMuted);
+  }, [ambientMuted]);
+  useEffect(() => {
+    const go = () => ambient.enable();
+    window.addEventListener('pointerdown', go, { once: true });
+    window.addEventListener('keydown', go, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', go);
+      window.removeEventListener('keydown', go);
+    };
+  }, []);
 
   // Hub / first-run sit at their own water depth (§4); the session flow manages its own.
   useEffect(() => {
