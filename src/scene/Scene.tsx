@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBreath } from '../breath/useBreath';
 import { prefersReduced } from '../lib/motion';
 import { useMood, type Mood } from '../store/scene';
-import { MOODS, STAR_FIELD, type Palette } from './moods';
+import { MOODS, STAR_FIELD, CLOUD_FIELD, FIREFLY_FIELD, type Palette } from './moods';
 
 // Deterministic drift tables so birds/leaves never jump between renders.
 const BIRD_FIELD = [
@@ -30,12 +30,12 @@ function SceneArt({ palette }: { palette: Palette }) {
 
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} aria-hidden>
-      {/* sky */}
+      {/* sky — three stops for real depth from zenith to horizon */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(180deg, ${p.skyTop} 0%, ${p.skyHorizon} 48%, transparent 63%)`,
+          background: `linear-gradient(180deg, ${p.skyTop} 0%, ${p.skyMid} 34%, ${p.skyHorizon} 56%, transparent 66%)`,
         }}
       />
       {/* horizon glow behind the ridge */}
@@ -44,8 +44,8 @@ function SceneArt({ palette }: { palette: Palette }) {
           position: 'absolute',
           left: 0,
           right: 0,
-          top: '46%',
-          height: '22%',
+          top: '44%',
+          height: '24%',
           background: `radial-gradient(120% 100% at 50% 100%, ${p.glow}, transparent 70%)`,
           opacity: glow,
         }}
@@ -65,13 +65,16 @@ function SceneArt({ palette }: { palette: Palette }) {
             }}
           />
         ))}
-      {/* clouds */}
-      {p.clouds && (
-        <>
-          <span className="scene-cloud" style={{ top: '18%', width: 150, height: 30, animationDuration: '90s' }} />
-          <span className="scene-cloud" style={{ top: '30%', width: 100, height: 22, animationDuration: '120s', animationDelay: '-40s', opacity: 0.5 }} />
-        </>
-      )}
+      {/* a single shooting star crossing the night */}
+      {p.shooting && <span className="scene-shoot" style={{ left: '14%', top: '10%' }} />}
+      {/* clouds — layered puffs drifting at different speeds/opacities */}
+      {CLOUD_FIELD.slice(0, p.clouds).map((c, i) => (
+        <span
+          key={i}
+          className="scene-cloud"
+          style={{ top: `${c.top}%`, width: c.w, height: c.h, opacity: c.op, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
+        />
+      ))}
       {/* birds — drift across the sky, wings flapping (morning/day) */}
       {p.birds > 0 &&
         BIRD_FIELD.slice(0, p.birds).map((bd, i) => (
@@ -90,6 +93,20 @@ function SceneArt({ palette }: { palette: Palette }) {
           transform: 'translate(-50%,-50%)',
         }}
       >
+        {/* slow-turning ray fan behind the sun (morning/afternoon) */}
+        {p.rays && (
+          <div
+            className="scene-rays"
+            style={{
+              width: p.body.r * 16,
+              height: p.body.r * 16,
+              background: `repeating-conic-gradient(from 0deg at 50% 50%, ${p.body.color}22 0deg 3deg, transparent 3deg 15deg)`,
+              WebkitMaskImage: 'radial-gradient(circle, #000 6%, transparent 60%)',
+              maskImage: 'radial-gradient(circle, #000 6%, transparent 60%)',
+              opacity: glow * 0.55,
+            }}
+          />
+        )}
         <div
           style={{
             position: 'absolute',
@@ -126,19 +143,32 @@ function SceneArt({ palette }: { palette: Palette }) {
           />
         )}
       </div>
-      {/* mountains + pines */}
+      {/* mountains + pines — three parallax ridges for real depth */}
       <svg
         viewBox="0 0 100 40"
         preserveAspectRatio="none"
         style={{ position: 'absolute', left: 0, top: '40%', width: '100%', height: '24%' }}
       >
-        <path d="M0 26 L14 10 L26 21 L40 6 L55 22 L70 9 L84 20 L100 8 L100 40 L0 40 Z" fill={p.ridgeFar} />
-        <path d="M0 40 L0 30 L18 18 L34 30 L50 16 L66 29 L82 19 L100 31 L100 40 Z" fill={p.ridgeNear} />
+        <path d="M0 24 L16 8 L30 19 L46 5 L60 20 L76 7 L90 18 L100 9 L100 40 L0 40 Z" fill={p.ridgeFar} />
+        <path d="M0 40 L0 26 L20 16 L38 27 L54 14 L72 26 L88 17 L100 27 L100 40 Z" fill={p.ridgeMid} />
+        <path d="M0 40 L0 32 L22 23 L40 32 L58 21 L78 31 L100 25 L100 40 Z" fill={p.ridgeNear} />
         {/* pines along the shoreline */}
         {[6, 12, 20, 78, 86, 93].map((x, i) => (
           <path key={i} d={`M${x} 40 L${x - 2} 34 L${x} 30 L${x + 2} 34 Z`} fill={p.tree} />
         ))}
       </svg>
+      {/* the body reflected on the waterline — a soft swaying shimmer */}
+      {p.reflect && (
+        <span
+          className="scene-reflection"
+          style={{ left: `${p.body.x}%`, top: '60%', width: p.body.r * 3.4, height: p.body.r * 1.2, background: p.body.color }}
+        />
+      )}
+      {/* fireflies / gold motes drifting near the water (dusk/night) */}
+      {p.fireflies > 0 &&
+        FIREFLY_FIELD.slice(0, p.fireflies).map((ff, i) => (
+          <span key={i} className="scene-firefly" style={{ left: `${ff.x}%`, top: `${ff.y}%`, animationDelay: `${ff.delay}s` }} />
+        ))}
       {/* falling leaves — drift down toward the water (day/dusk) */}
       {p.leaves > 0 &&
         LEAF_FIELD.slice(0, p.leaves).map((lf, i) => (
@@ -168,7 +198,7 @@ export default function Scene() {
   }, [mood]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.62 }} aria-hidden>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.7 }} aria-hidden>
       {layers.map((l, i) => (
         <div
           key={l.id}

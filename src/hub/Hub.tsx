@@ -25,7 +25,7 @@ export default function Hub() {
   const tab = useHubTab();
   const reduce = useReducedMotion();
   return (
-    <div style={{ minHeight: '100%', paddingBottom: 92 }}>
+    <div style={{ minHeight: '100%', paddingBottom: 104 }}>
       <Suspense fallback={<div className="screen" />}>
         <motion.div
           key={tab}

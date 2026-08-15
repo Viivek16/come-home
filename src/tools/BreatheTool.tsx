@@ -26,6 +26,7 @@ export default function BreatheTool() {
   const pattern = patternById(patternId);
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [scale, setScale] = useState(SMALL);
+  const [count, setCount] = useState(1);
 
   useEffect(() => {
     setDepth('checkin');
@@ -68,10 +69,22 @@ export default function BreatheTool() {
     };
   }, [phase, pattern, reduce, minutes]);
 
+  // Per-phase counter: 1→N seconds, restarting each phase (box → "1 2 3 4" in,
+  // "1 2 3 4" hold, and so on). Runs off wall-clock seconds so it holds up under
+  // reduced motion too — the numbers guide the breath even when the orb is still.
+  useEffect(() => {
+    if (phase !== 'running') return;
+    setCount(1);
+    const secs = pattern.phases[phaseIdx]?.seconds ?? 0;
+    const id = setInterval(() => setCount((c) => (c < secs ? c + 1 : c)), 1000);
+    return () => clearInterval(id);
+  }, [phase, phaseIdx, pattern]);
+
   const begin = () => {
     toolPrefsStore.patch({ breathePattern: patternId, breatheMinutes: minutes });
     setPhaseIdx(0);
     setScale(SMALL);
+    setCount(1);
     setPhase('running');
   };
 
@@ -153,9 +166,13 @@ export default function BreatheTool() {
       )}
 
       {phase === 'running' && (
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center py-10 text-center">
-          <div style={{ height: 40 }} />
-          <div style={{ position: 'relative', width: 220, height: 220, display: 'grid', placeItems: 'center' }}>
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center text-center">
+          <div style={{ position: 'relative', width: 240, height: 240, display: 'grid', placeItems: 'center' }}>
+            {/* Ambient aura keeps the breath feeling alive even through a hold. */}
+            <div className="breath-aura" aria-hidden style={{ width: 220, height: 220, position: 'absolute' }} />
+            {/* The orb grows on the in-breath and softens on the out-breath — the
+                growth IS the timing (transition length = the phase seconds). It also
+                brightens as it fills, so an inhale feels like drawing light in. */}
             <div
               className="breath-orb"
               aria-hidden
@@ -163,19 +180,21 @@ export default function BreatheTool() {
                 width: 220,
                 height: 220,
                 transform: `scale(${reduce ? STILL : scale})`,
-                transition: reduce ? 'none' : `transform ${orbSeconds}s var(--ease-calm)`,
+                filter: reduce ? 'none' : `brightness(${0.8 + ((scale - SMALL) / (LARGE - SMALL)) * 0.55})`,
+                transition: reduce ? 'none' : `transform ${orbSeconds}s var(--ease-calm), filter ${orbSeconds}s var(--ease-calm)`,
               }}
             />
-            <span
-              className="serif"
-              role="status"
-              aria-live="polite"
-              style={{ position: 'absolute', fontSize: 'var(--t-lg)', color: 'var(--ink)', letterSpacing: '0.02em' }}
-            >
-              {cue?.label}
-            </span>
+            {/* Count 1→N inside the orb, with the cue beneath it. */}
+            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span className="breath-count" role="status" aria-live="polite" aria-label={`${cue?.label}, ${count}`}>
+                {count}
+              </span>
+              <span className="breath-cue" aria-hidden>
+                {cue?.label}
+              </span>
+            </div>
           </div>
-          <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', marginTop: 34 }}>
+          <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', marginTop: 40 }}>
             {pattern.name} · {minutes} min
           </p>
         </div>

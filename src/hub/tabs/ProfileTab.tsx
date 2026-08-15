@@ -109,6 +109,12 @@ export default function ProfileTab() {
           </button>
         </Reveal>
 
+        {/* Weekly rhythm — a gentle habit nudge that encourages daily practice,
+            never a streak to break or a guilt count (§8). */}
+        <Reveal delay={0.18}>
+          <WeekTracker history={history} reflections={reflections} />
+        </Reveal>
+
         {moments.length === 0 ? (
           <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)' }}>
             When you come home, your moments will gather here — just for you.
@@ -134,13 +140,6 @@ export default function ProfileTab() {
           Settings
         </div>
         <div className="glass mt-3" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
-          <Row label="Background music">
-            <Switch
-              on={!prefs.ambientMuted}
-              label="Background music"
-              onToggle={() => prefsStore.setAmbientMuted(!prefs.ambientMuted)}
-            />
-          </Row>
           <Row label="Reduce motion">
             <Switch
               on={prefs.reduceMotion}
@@ -184,6 +183,72 @@ export default function ProfileTab() {
           Continue with Google · coming later
         </button>
       </div>
+    </div>
+  );
+}
+
+const DAY_MS = 86_400_000;
+const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+/** Encouragement scaled to how many days this week held a moment (§8). */
+function weekMessage(count: number): string {
+  if (count >= 7) return 'Seven for seven — you’re doing beautifully.';
+  if (count >= 5) return 'You’re building a lovely rhythm this week.';
+  if (count >= 3) return 'You’re finding your rhythm — keep it going.';
+  if (count >= 1) return 'A gentle start. You can still pick up.';
+  return 'Whenever you’re ready — one breath is enough.';
+}
+
+/**
+ * Minimalist weekly habit tracker (§8). Seven dots for the last seven days; a
+ * day lights up gold when it holds any moment (a check-in or a reflection). It
+ * encourages daily practice with a warm line — never a streak, never guilt.
+ */
+function WeekTracker({ history, reflections }: { history: HistoryEntry[]; reflections: Reflection[] }) {
+  const active = new Set<string>();
+  for (const h of history) active.add(dateKey(new Date(h.ts)));
+  for (const r of reflections) active.add(dateKey(new Date(r.ts)));
+
+  const now = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getTime() - (6 - i) * DAY_MS);
+    return { letter: DOW[d.getDay()], on: active.has(dateKey(d)), isToday: i === 6 };
+  });
+  const count = days.filter((d) => d.on).length;
+
+  return (
+    <div className="glass mb-5 px-5 py-5" style={{ borderRadius: 'var(--radius-card)' }}>
+      <div className="flex items-baseline justify-between">
+        <div className="eyebrow">This week</div>
+        <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+          {count}/7 days
+        </div>
+      </div>
+      <div className="mt-4 flex items-center justify-between" aria-hidden>
+        {days.map((d, i) => (
+          <div key={i} className="flex flex-col items-center gap-2">
+            <span
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 999,
+                background: d.on ? 'var(--gold)' : 'transparent',
+                border: `1px solid ${d.on ? 'var(--gold)' : 'var(--hairline)'}`,
+                boxShadow: d.on ? '0 0 12px rgba(232,201,155,0.45)' : 'none',
+                outline: d.isToday ? '1px solid rgba(232,201,155,0.5)' : 'none',
+                outlineOffset: 3,
+              }}
+            />
+            <span className="eyebrow" style={{ fontSize: 9, color: d.isToday ? 'var(--ink)' : 'var(--ink-muted)' }}>
+              {d.letter}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 16 }}>
+        {weekMessage(count)}
+      </p>
     </div>
   );
 }

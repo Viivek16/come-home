@@ -44,18 +44,20 @@ export default function HomeTab() {
 
   return (
     <div className="screen">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-start pt-4 pb-6">
         <Reveal delay={0.05}>
           <div className="eyebrow">{today()}</div>
-          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, lineHeight: 1.05, whiteSpace: 'pre-line' }}>
-            {PHASE[phaseFor()].hi}{prefs.name ? `,\n${prefs.name}` : ''}
+          {/* Compact greeting (§4): name stays inline, one tighter line, so the
+              day card and everything below rise into view sooner. */}
+          <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 4, lineHeight: 1.08 }}>
+            {PHASE[phaseFor()].hi}{prefs.name ? `, ${prefs.name}` : ''}
           </h1>
-          <p style={{ color: 'var(--ink-muted)', marginTop: 10, fontSize: 'var(--t-md)' }}>
+          <p style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
             {PHASE[phaseFor()].sub}
           </p>
         </Reveal>
 
-        <Reveal delay={0.25} className="mt-8">
+        <Reveal delay={0.25} className="mt-6">
           <button
             onClick={startToday}
             className="glass glass-strong glass-gold w-full px-6 py-6 text-left transition-transform duration-300 active:scale-[0.99]"

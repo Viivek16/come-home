@@ -1,13 +1,49 @@
-import type { ComponentType } from 'react';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '../lib/motion';
 
 export type TabItem = { id: string; label: string; Icon: ComponentType<{ size?: number; strokeWidth?: number }> };
 
 /**
- * Glass bottom tab bar (§6). Gold active state, NO badges, no guilt dots (§2).
- * Portaled to <body> so it is ALWAYS anchored to the viewport bottom — never
- * captured by an ancestor's transform/filter containing block.
+ * Floating glass tab bar (§1/§2). A detached pill that content scrolls *under*,
+ * not a rigid edge-to-edge strip. It auto-hides on scroll-down and springs back
+ * on scroll-up (Apple "translucent chrome" — §12), always visible near the top
+ * or when the page can't scroll, so navigation is never stranded. A scroll-edge
+ * scrim dissolves content into the dark before it reaches the glass, so nothing
+ * merges behind it (§2). Portaled to <body> so it's anchored to the viewport,
+ * never captured by an ancestor transform/filter.
  */
+function useAutoHide(): boolean {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    let last = window.scrollY;
+    let ticking = false;
+    const evaluate = () => {
+      ticking = false;
+      const y = window.scrollY;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight > 80;
+      const delta = y - last;
+      if (!scrollable || y < 24) {
+        setVisible(true); // near the top, or nothing to scroll → always reachable
+      } else if (delta > 6) {
+        setVisible(false); // scrolling down → get out of the way
+      } else if (delta < -6) {
+        setVisible(true); // scrolling up → return
+      }
+      last = y;
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(evaluate);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return visible;
+}
+
 export default function TabBar({
   items,
   active,
@@ -17,57 +53,44 @@ export default function TabBar({
   active: string;
   onChange: (id: string) => void;
 }) {
+  const visible = useAutoHide();
+  const reduce = useReducedMotion();
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Slide distance = the pill's own height + its bottom offset, so it tucks fully
+  // off-screen. Measured, with a safe fallback before first layout.
+  const hidden = (wrapRef.current?.offsetHeight ?? 96) + 12;
+
   return createPortal(
-    <nav
-      className="glass"
-      aria-label="Sections"
-      style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 50,
-        borderRadius: 0,
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderBottom: 'none',
-        paddingBottom: 'var(--safe-bottom)',
-        display: 'flex',
-      }}
-    >
-      {items.map(({ id, label, Icon }) => {
-        const on = id === active;
-        return (
-          <button
-            key={id}
-            onClick={() => onChange(id)}
-            aria-current={on ? 'page' : undefined}
-            className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-[color,opacity] duration-300"
-            style={{
-              color: on ? 'var(--gold)' : 'var(--ink-muted)',
-              opacity: on ? 1 : 0.7,
-              minHeight: 58,
-              transitionTimingFunction: 'var(--ease-calm)',
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: 4,
-                width: 44,
-                height: 30,
-                borderRadius: 999,
-                background: on ? 'radial-gradient(circle, rgba(232,201,155,0.22), transparent 70%)' : 'transparent',
-                transition: 'background .35s var(--ease-calm)',
-              }}
-            />
-            <Icon size={22} strokeWidth={1.5} />
-            <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
-          </button>
-        );
-      })}
-    </nav>,
+    <>
+      <div className="tabbar-scrim" aria-hidden />
+      <motion.div
+        ref={wrapRef}
+        className="tabbar-wrap"
+        initial={false}
+        animate={reduce ? { opacity: visible ? 1 : 0 } : { y: visible ? 0 : hidden, opacity: visible ? 1 : 0 }}
+        transition={reduce ? { duration: 0.2 } : { type: 'spring', bounce: 0, duration: 0.4 }}
+      >
+        <nav className="tabbar" aria-label="Sections">
+          {items.map(({ id, label, Icon }) => {
+            const on = id === active;
+            return (
+              <button
+                key={id}
+                onClick={() => onChange(id)}
+                aria-current={on ? 'page' : undefined}
+                className="tabbar-btn"
+                style={{ color: on ? 'var(--gold)' : 'var(--ink-muted)', transitionTimingFunction: 'var(--ease-calm)' }}
+              >
+                <span className="tabbar-pip" aria-hidden />
+                <Icon size={21} strokeWidth={on ? 1.9 : 1.5} />
+                <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </motion.div>
+    </>,
     document.body,
   );
 }

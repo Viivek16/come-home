@@ -3,7 +3,6 @@ import Mark from '../ui/Mark';
 import Button from '../ui/Button';
 import Reveal from '../ui/Reveal';
 import { app } from '../store/app';
-import { session } from '../store/session';
 import { prefsStore, usePrefs } from '../store/prefs';
 import { markFirstRunDone } from '../lib/storage';
 
@@ -41,11 +40,13 @@ function Welcome() {
   const [card, setCard] = useState(0);
   const [name, setName] = useState(prefs.name);
 
+  // Onboarding runs ONCE (markFirstRunDone persists). New users land on Home —
+  // the returning-user hub with full navigation — not straight into the session
+  // check-in, so the questionnaire never repeats on later launches (§3).
   const complete = () => {
     prefsStore.setName(name.trim());
     markFirstRunDone();
-    session.reset();
-    app.setView('session');
+    app.setView('hub');
   };
 
   return (
