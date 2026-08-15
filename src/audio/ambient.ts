@@ -4,6 +4,15 @@
  * Starts on the first user gesture (autoplay policy), ducks under the session
  * audio, mutes via the persisted pref, and suspends when the tab is hidden.
  */
+/**
+ * Single ambient-source config. Ambient plays ONLY when a distinct, non-null
+ * ambient asset is set here. It is null by default, so ambient is OFF and never
+ * doubles the guided track. Point this at a real, dedicated ambient asset (one
+ * that is NOT the guided track) to turn the bed back on — the wiring below is
+ * kept intact for that day.
+ */
+const AMBIENT_SRC: string | null = null;
+
 const BASE = 0.075; // resting volume — present but gentle
 const DUCK = 0.02; // while the meditation audio is playing
 
@@ -96,8 +105,11 @@ function build() {
 }
 
 export const ambient = {
-  /** Call from a user gesture. Builds + starts the pad unless muted. */
+  /** Call from a user gesture. Builds + starts the pad unless muted. No-op until
+   *  a distinct ambient asset is configured (AMBIENT_SRC), so ambient never
+   *  overlaps/doubles the guided track. */
   enable() {
+    if (!AMBIENT_SRC) return;
     if (muted) return;
     if (!started) {
       started = true;

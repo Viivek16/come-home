@@ -5,6 +5,7 @@ import { setDepth, type DepthGroup } from '../store/water';
 import { useSessionState, type Step } from '../store/session';
 import { addHistory } from '../lib/storage';
 import { nav } from '../nav/history';
+import ExitButton from '../ui/ExitButton';
 import Opening from './screens/Opening';
 import Arrival from './screens/Arrival';
 import Response from './screens/Response';
@@ -68,15 +69,20 @@ export default function SessionFlow() {
 
   // Enter-only cross-dissolve keyed by step (framer-motion 13's AnimatePresence
   // mode="wait" hangs here — same pattern the old router used). 500ms (§5).
+  // The exit affordance is a persistent sibling (outside the keyed transition) so
+  // every step has a consistent way out that never re-animates or traps the user.
   return (
-    <motion.div
-      key={step}
-      className="min-h-full"
-      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: CALMER.includes(step) ? -6 : 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: reduce ? 0.001 : 0.5, ease: [0.22, 0.61, 0.36, 1] }}
-    >
-      {screen}
-    </motion.div>
+    <>
+      <ExitButton onExit={toHub} />
+      <motion.div
+        key={step}
+        className="min-h-full"
+        initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: CALMER.includes(step) ? -6 : 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: reduce ? 0.001 : 0.5, ease: [0.22, 0.61, 0.36, 1] }}
+      >
+        {screen}
+      </motion.div>
+    </>
   );
 }

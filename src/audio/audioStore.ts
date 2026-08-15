@@ -11,12 +11,26 @@ import { ambient } from './ambient';
  * exists now — the "Music continues after voice" copy stays true.
  */
 export const TRACK = '/audio/track.mp3';
-export type SessionAudio = { voiceTrack?: string; musicTrack: string };
+// musicTrack may be null → a session with no configured audio source yet. The
+// player then shows a calm "coming soon" state instead of a dead 0:00 shell.
+export type SessionAudio = { voiceTrack?: string; musicTrack: string | null };
 export const SESSION_AUDIO: SessionAudio = { musicTrack: TRACK };
 
-type Snap = { playing: boolean; position: number; duration: number; ready: boolean; error: boolean };
-let snap: Snap = { playing: false, position: 0, duration: 0, ready: false, error: false };
+type Snap = { playing: boolean; position: number; duration: number; ready: boolean; error: boolean; hasSource: boolean };
+let snap: Snap = { playing: false, position: 0, duration: 0, ready: false, error: false, hasSource: true };
 let loadedSrc: string | null = null;
+
+// Stall guard: if a load never reports metadata OR error (e.g. a hung request on
+// a bad deploy), flip to the calm unavailable state rather than freeze at 0:00.
+// ponytail: 12s heuristic — a genuinely slow network could false-trip; that's an
+// acceptable trade against a frozen shell (the whole point of §FIX1).
+let stallTimer: ReturnType<typeof setTimeout> | null = null;
+const clearStall = () => {
+  if (stallTimer) {
+    clearTimeout(stallTimer);
+    stallTimer = null;
+  }
+};
 const listeners = new Set<() => void>();
 const emit = (p: Partial<Snap>) => {
   snap = { ...snap, ...p };
@@ -44,18 +58,29 @@ function mediaPosition() {
 audio.on('play', () => (emit({ playing: true }), mediaState('playing'), ambient.setDucked(true)));
 audio.on('pause', () => (emit({ playing: false }), mediaState('paused'), ambient.setDucked(false)));
 audio.on('ended', () => (emit({ playing: false }), mediaState('paused'), ambient.setDucked(false)));
-audio.on('loadedmetadata', () => emit({ duration: audio.duration, ready: true }));
+audio.on('loadedmetadata', () => (clearStall(), emit({ duration: audio.duration, ready: true, error: false })));
 audio.on('durationchange', () => emit({ duration: audio.duration }));
 audio.on('timeupdate', () => (emit({ position: audio.currentTime }), mediaPosition()));
-audio.on('error', () => emit({ error: true, ready: false }));
+audio.on('error', () => (clearStall(), emit({ error: true, ready: false })));
 
 export const audioControls = {
   /** Load a track once. No-op if already loaded (preserves position across screens). */
-  ensureLoaded(src: string = TRACK) {
+  ensureLoaded(src: string | null = TRACK) {
+    // No configured source → calm "coming soon", never a frozen transport.
+    if (!src) {
+      clearStall();
+      loadedSrc = null;
+      emit({ error: false, ready: false, position: 0, duration: 0, playing: false, hasSource: false });
+      return;
+    }
     if (loadedSrc === src) return;
     loadedSrc = src;
-    emit({ error: false, ready: false, position: 0, duration: 0, playing: false });
+    clearStall();
+    emit({ error: false, ready: false, position: 0, duration: 0, playing: false, hasSource: true });
     audio.load(src);
+    stallTimer = setTimeout(() => {
+      if (!snap.ready && !snap.error) emit({ error: true });
+    }, 12_000);
     if (ms) {
       try {
         ms.metadata = new MediaMetadata({ title: 'Come Home', artist: 'Come Home' });

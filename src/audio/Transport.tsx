@@ -7,13 +7,14 @@ const fmt = (s: number) => {
   return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 };
 
-function SkipButton({ dir, onClick }: { dir: 'back' | 'fwd'; onClick: () => void }) {
+function SkipButton({ dir, onClick, disabled = false }: { dir: 'back' | 'fwd'; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       aria-label={dir === 'back' ? 'Back 10 seconds' : 'Forward 10 seconds'}
       className="glass grid place-items-center transition-transform duration-300 active:scale-[0.94]"
-      style={{ width: 52, height: 52, borderRadius: 999, color: 'var(--ink)', transitionTimingFunction: 'var(--ease-calm)' }}
+      style={{ width: 52, height: 52, borderRadius: 999, color: 'var(--ink)', opacity: disabled ? 0.4 : 1, transitionTimingFunction: 'var(--ease-calm)' }}
     >
       <span style={{ position: 'relative', display: 'grid', placeItems: 'center', width: 24, height: 24 }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden style={{ transform: dir === 'fwd' ? 'scaleX(-1)' : undefined }}>
@@ -29,7 +30,9 @@ function SkipButton({ dir, onClick }: { dir: 'back' | 'fwd'; onClick: () => void
 /** Shared transport (§6.4/§6.5). Cinematic: optional big time, gold play with
  *  glow, circular glass ±10s, thin gold seek. Native range = keyboard seek (§10). */
 export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
-  const { playing, position, duration, error } = useAudio();
+  const { playing, position, duration, error, hasSource } = useAudio();
+  // No configured source, or the source failed/stalled → calm "coming soon".
+  const unavailable = !hasSource || error;
   const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
   return (
@@ -44,10 +47,11 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
       )}
 
       <div className="flex items-center gap-8">
-        <SkipButton dir="back" onClick={() => audioControls.skip(-10)} />
+        <SkipButton dir="back" onClick={() => audioControls.skip(-10)} disabled={unavailable} />
 
         <button
           onClick={() => audioControls.toggle()}
+          disabled={unavailable}
           aria-label={playing ? 'Pause' : 'Play'}
           className="grid place-items-center transition-transform duration-300 active:scale-[0.96]"
           style={{
@@ -56,6 +60,7 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
             borderRadius: 999,
             background: 'linear-gradient(180deg, #F0D6AA, var(--gold-deep))',
             color: '#11242d',
+            opacity: unavailable ? 0.4 : 1,
             boxShadow: '0 12px 36px rgba(232,201,155,0.34), inset 0 1px 0 rgba(255,255,255,0.55)',
             transitionTimingFunction: 'var(--ease-calm)',
           }}
@@ -72,7 +77,7 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
           )}
         </button>
 
-        <SkipButton dir="fwd" onClick={() => audioControls.skip(10)} />
+        <SkipButton dir="fwd" onClick={() => audioControls.skip(10)} disabled={unavailable} />
       </div>
 
       <div className="w-full">
@@ -87,7 +92,7 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
           onChange={(e) => audioControls.seek(Number(e.target.value))}
           aria-label="Seek"
           aria-valuetext={`${fmt(position)} of ${fmt(duration)}`}
-          disabled={!duration}
+          disabled={!duration || unavailable}
         />
         <div className="mt-1 flex justify-between eyebrow">
           <span>{fmt(position)}</span>
@@ -95,9 +100,9 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
         </div>
       </div>
 
-      {error && (
-        <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', textAlign: 'center' }}>
-          The sound isn't here yet. Add public/audio/track.mp3 to hear it.
+      {unavailable && (
+        <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', textAlign: 'center' }}>
+          The guided sound isn&rsquo;t here yet. Rest here as long as you like.
         </p>
       )}
     </div>

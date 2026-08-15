@@ -244,9 +244,13 @@ body {
     transform: none;
   }
 }
+/* Resting state is VISIBLE; the entrance animation only enhances it. `both` fill
+   applies the from-state during the stagger delay, so the staggered entrance is
+   preserved — but if the animation is ever dropped or interrupted (a busy
+   compositor, an offscreen→onscreen mount), content degrades to visible instead
+   of being trapped at opacity:0. Fixes the Sleep tab rendering blank. */
 .reveal {
-  opacity: 0;
-  animation: reveal-up 0.72s var(--ease-calm) forwards;
+  animation: reveal-up 0.72s var(--ease-calm) both;
 }
 
 /* Text scrim — keeps contrast over bright glint (§10). Sits behind text blocks. */

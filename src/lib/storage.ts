@@ -19,7 +19,9 @@ const local = (): Storage | null => {
 };
 
 export type Prefs = { name: string; reduceMotion: boolean; voice: string; ambientMuted: boolean };
-export const DEFAULT_PREFS: Prefs = { name: '', reduceMotion: false, voice: 'default', ambientMuted: false };
+// ambientMuted defaults true → "Background music" is OFF by default (§FIX2). It
+// stays inert until a distinct ambient asset is configured (see audio/ambient.ts).
+export const DEFAULT_PREFS: Prefs = { name: '', reduceMotion: false, voice: 'default', ambientMuted: true };
 
 export function loadPrefs(): Prefs {
   try {
