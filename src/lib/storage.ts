@@ -9,6 +9,7 @@ import type { Checkin, Emotion } from '../store/session';
 const PREFS_KEY = 'come-home:prefs';
 const FIRSTRUN_KEY = 'come-home:firstRunDone';
 const HISTORY_KEY = 'come-home:history';
+const TOOLS_KEY = 'come-home:tools';
 
 const local = (): Storage | null => {
   try {
@@ -32,6 +33,37 @@ export function loadPrefs(): Prefs {
 }
 export function savePrefs(p: Prefs): void {
   local()?.setItem(PREFS_KEY, JSON.stringify(p));
+}
+
+/**
+ * Self-directed tool settings (§Phase2), on-device only. Interval bells default
+ * OFF (0). End tone defaults on so an eyes-closed sit knows when it's complete.
+ */
+export type ToolPrefs = {
+  timerMinutes: number;
+  timerStartTone: boolean;
+  timerEndTone: boolean;
+  timerIntervalMin: number; // 0 = off
+  breathePattern: string;
+  breatheMinutes: number;
+};
+export const DEFAULT_TOOL_PREFS: ToolPrefs = {
+  timerMinutes: 5,
+  timerStartTone: true,
+  timerEndTone: true,
+  timerIntervalMin: 0,
+  breathePattern: 'coherent',
+  breatheMinutes: 3,
+};
+export function loadToolPrefs(): ToolPrefs {
+  try {
+    return { ...DEFAULT_TOOL_PREFS, ...JSON.parse(local()?.getItem(TOOLS_KEY) ?? '{}') };
+  } catch {
+    return { ...DEFAULT_TOOL_PREFS };
+  }
+}
+export function saveToolPrefs(p: ToolPrefs): void {
+  local()?.setItem(TOOLS_KEY, JSON.stringify(p));
 }
 
 export function firstRunDone(): boolean {

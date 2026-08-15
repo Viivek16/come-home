@@ -10,8 +10,11 @@ import { prefersReduced, subscribeMotion } from '../lib/motion';
  * - document hidden / backgrounded → RAF cancelled, resumes on focus (§4).
  * - Single RAF loop shared by all subscribers; stops when none remain.
  */
-const INHALE = 4;
-const EXHALE = 6;
+// The shared breath timing — the single source of truth (§5). Exported so the
+// Breathe tool's default "Coherent" pattern uses the exact same numbers as the
+// water / mark / rings, never a competing definition.
+export const INHALE = 4;
+export const EXHALE = 6;
 const CYCLE = INHALE + EXHALE;
 
 // easeOutCubic — a calm approximation of cubic-bezier(.22,.61,.36,1).

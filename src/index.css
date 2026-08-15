@@ -253,6 +253,23 @@ body {
   animation: reveal-up 0.72s var(--ease-calm) both;
 }
 
+/* ---- Breathing orb (§Phase2) — soft champagne glass sphere. Scale is driven
+   INLINE per phase (transform only, GPU); the phase duration/easing come from the
+   pattern, so there is no requestAnimationFrame loop. Reduced motion: the global
+   rule below zeroes the transition, so it simply holds still while the text cues
+   still guide the breath. */
+.breath-orb {
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, rgba(232, 201, 155, 0.3), rgba(232, 201, 155, 0.12) 55%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(232, 201, 155, 0.4);
+  box-shadow:
+    0 0 70px rgba(232, 201, 155, 0.22),
+    inset 0 0 44px rgba(232, 201, 155, 0.12);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  will-change: transform;
+}
+
 /* Text scrim — keeps contrast over bright glint (§10). Sits behind text blocks. */
 .text-scrim {
   background: radial-gradient(

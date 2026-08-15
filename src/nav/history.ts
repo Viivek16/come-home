@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { app, useView } from '../store/app';
 import { hub, useHubTab, type TabId } from '../store/hub';
 import { session } from '../store/session';
+import { tool, type ToolId } from '../store/tool';
 import { audioControls } from '../audio/audioStore';
 import { firstRunDone } from '../lib/storage';
 
@@ -19,10 +20,16 @@ import { firstRunDone } from '../lib/storage';
  * Works the same on the web and inside Capacitor's Android WebView (the hardware
  * Back button drives window history there too).
  */
-type Loc = string; // 'first-run' | 'session' | `hub:${TabId}`
+type Loc = string; // 'first-run' | 'session' | `tool:${ToolId}` | `hub:${TabId}`
 
 const locOf = (view: string, tab: TabId): Loc =>
-  view === 'session' ? 'session' : view === 'first-run' ? 'first-run' : `hub:${tab}`;
+  view === 'session'
+    ? 'session'
+    : view === 'tool'
+      ? `tool:${tool.which}`
+      : view === 'first-run'
+        ? 'first-run'
+        : `hub:${tab}`;
 
 // The loc a popstate is currently restoring — so the mirror effect below knows
 // that loc change was a Back (don't re-push) rather than a forward navigation.
@@ -43,6 +50,11 @@ function applyLoc(loc: Loc): Loc {
   if (loc === 'session') {
     app.setView('session');
     return 'session';
+  }
+  if (loc.startsWith('tool:')) {
+    tool.set(loc.slice(5) as ToolId);
+    app.setView('tool');
+    return loc;
   }
   const tab = loc.slice(4) as TabId;
   if (app.view === 'session') {

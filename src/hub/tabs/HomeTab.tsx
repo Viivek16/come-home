@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Timer, Wind } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
+import PracticeCard from '../../ui/PracticeCard';
 import { usePrefs } from '../../store/prefs';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
+import { openTool } from '../../store/tool';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import { PHASE, phaseFor } from '../../lib/greeting';
@@ -69,6 +72,17 @@ export default function HomeTab() {
             </button>
           </Reveal>
         )}
+
+        {/* Quiet, self-directed practices — secondary to the one clear action above. */}
+        <Reveal delay={0.55}>
+          <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
+            Or take a quiet moment
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <PracticeCard Icon={Timer} title="Quiet timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
+            <PracticeCard Icon={Wind} title="Breathe" sub="Guided · visual" onClick={() => openTool('breathe')} />
+          </div>
+        </Reveal>
       </div>
     </div>
   );

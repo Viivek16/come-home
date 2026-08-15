@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Play, Download, Check } from 'lucide-react';
+import { Play, Download, Check, Timer, Wind } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
+import PracticeCard from '../../ui/PracticeCard';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
+import { openTool } from '../../store/tool';
 import { LIBRARY_ITEMS } from '../../data/library';
 
 /** §6 Library. Browse by feeling · length · voice. Offline download is stubbed. */
@@ -24,9 +26,24 @@ export default function LibraryTab() {
             Find what you need.
           </h1>
         </Reveal>
+
+        {/* Self-directed practices — no content, no narrator (§Phase2). */}
+        <Reveal delay={0.1}>
+          <div className="eyebrow" style={{ marginBottom: 10 }}>
+            Practices
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <PracticeCard Icon={Timer} title="Quiet timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
+            <PracticeCard Icon={Wind} title="Breathe" sub="Guided · visual" onClick={() => openTool('breathe')} />
+          </div>
+        </Reveal>
+
+        <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
+          Guided
+        </div>
         <div className="flex flex-col gap-3">
           {LIBRARY_ITEMS.map((l, i) => (
-            <Reveal key={l.id} delay={0.14 + i * 0.06}>
+            <Reveal key={l.id} delay={0.2 + i * 0.06}>
               <div
                 className="glass flex items-center gap-4 px-4 py-4"
                 style={{ borderRadius: 'var(--radius-card)' }}

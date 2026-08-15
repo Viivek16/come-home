@@ -5,6 +5,7 @@ import Atmosphere from './water/Atmosphere';
 import SessionFlow from './session/SessionFlow';
 import FirstRun from './first-run/FirstRun';
 import Hub from './hub/Hub';
+import ToolHost from './tools/ToolHost';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
@@ -54,7 +55,15 @@ export default function App() {
       <Scene />
       <Atmosphere />
       <div className="app-layer">
-        {view === 'first-run' ? <FirstRun /> : view === 'session' ? <SessionFlow /> : <Hub />}
+        {view === 'first-run' ? (
+          <FirstRun />
+        ) : view === 'session' ? (
+          <SessionFlow />
+        ) : view === 'tool' ? (
+          <ToolHost />
+        ) : (
+          <Hub />
+        )}
       </div>
     </>
   );
