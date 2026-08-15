@@ -10,6 +10,8 @@ const PREFS_KEY = 'come-home:prefs';
 const FIRSTRUN_KEY = 'come-home:firstRunDone';
 const HISTORY_KEY = 'come-home:history';
 const TOOLS_KEY = 'come-home:tools';
+const FAVS_KEY = 'come-home:favorites';
+const LIBFILTER_KEY = 'come-home:libFilter';
 
 const local = (): Storage | null => {
   try {
@@ -64,6 +66,37 @@ export function loadToolPrefs(): ToolPrefs {
 }
 export function saveToolPrefs(p: ToolPrefs): void {
   local()?.setItem(TOOLS_KEY, JSON.stringify(p));
+}
+
+/**
+ * Saved / favorites (§Phase3), on-device only. Stored as prefixed keys
+ * (`lib:<id>` | `path:<id>`) so both library items and session paths can be
+ * saved and re-found.
+ */
+export function loadFavorites(): string[] {
+  try {
+    const v = JSON.parse(local()?.getItem(FAVS_KEY) ?? '[]');
+    return Array.isArray(v) ? (v as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+export function saveFavorites(list: string[]): void {
+  local()?.setItem(FAVS_KEY, JSON.stringify(list));
+}
+
+/** Last-used Library filter (§Phase3), persisted so it's calm across visits. */
+export type LibraryFilter = { time: 'all' | 'lte5' | 'mid' | 'gte15'; feeling: string };
+export const DEFAULT_LIB_FILTER: LibraryFilter = { time: 'all', feeling: 'all' };
+export function loadLibFilter(): LibraryFilter {
+  try {
+    return { ...DEFAULT_LIB_FILTER, ...JSON.parse(local()?.getItem(LIBFILTER_KEY) ?? '{}') };
+  } catch {
+    return { ...DEFAULT_LIB_FILTER };
+  }
+}
+export function saveLibFilter(f: LibraryFilter): void {
+  local()?.setItem(LIBFILTER_KEY, JSON.stringify(f));
 }
 
 export function firstRunDone(): boolean {

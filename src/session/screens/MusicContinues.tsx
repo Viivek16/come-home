@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { session } from '../../store/session';
+import { session, useSessionState } from '../../store/session';
 import { audioControls, SESSION_AUDIO } from '../../audio/audioStore';
 import Transport from '../../audio/Transport';
 import BreathWave from '../../audio/BreathWave';
@@ -8,6 +8,7 @@ import Button from '../../ui/Button';
 
 /** §6.5 Music continues — the cinematic ambient moment. */
 export default function MusicContinues() {
+  const { path } = useSessionState();
   useEffect(() => {
     audioControls.ensureLoaded(SESSION_AUDIO.musicTrack);
   }, []);
@@ -30,7 +31,7 @@ export default function MusicContinues() {
         </Reveal>
 
         <Reveal delay={0.4} className="w-full">
-          <Transport bigTime />
+          <Transport bigTime favKey={path ? `path:${path}` : undefined} />
         </Reveal>
 
         <Reveal delay={0.6} className="mt-9">

@@ -39,7 +39,7 @@ export default function Support() {
         </div>
 
         <Reveal delay={0.3}>
-          <Transport />
+          <Transport favKey={path ? `path:${path}` : undefined} />
           <p style={{ color: 'var(--ink-muted)', textAlign: 'center', fontSize: 'var(--t-sm)', marginTop: 16 }}>
             Music continues after voice.
           </p>

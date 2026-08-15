@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useAudio, audioControls } from './audioStore';
+import HeartButton from '../ui/HeartButton';
 
 const fmt = (s: number) => {
   if (!isFinite(s) || s < 0) return '0:00';
@@ -29,7 +30,7 @@ function SkipButton({ dir, onClick, disabled = false }: { dir: 'back' | 'fwd'; o
 
 /** Shared transport (§6.4/§6.5). Cinematic: optional big time, gold play with
  *  glow, circular glass ±10s, thin gold seek. Native range = keyboard seek (§10). */
-export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
+export default function Transport({ bigTime = false, favKey }: { bigTime?: boolean; favKey?: string }) {
   const { playing, position, duration, error, hasSource } = useAudio();
   // No configured source, or the source failed/stalled → calm "coming soon".
   const unavailable = !hasSource || error;
@@ -99,6 +100,8 @@ export default function Transport({ bigTime = false }: { bigTime?: boolean }) {
           <span>{fmt(duration)}</span>
         </div>
       </div>
+
+      {favKey && <HeartButton favKey={favKey} label="this session" />}
 
       {unavailable && (
         <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', textAlign: 'center' }}>
