@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 import Reveal from '../ui/Reveal';
 import ExitButton from '../ui/ExitButton';
+import ReflectionPrompt from '../ui/ReflectionPrompt';
 import { nav } from '../nav/history';
 import { setDepth } from '../store/water';
 import { useReducedMotion } from '../lib/motion';
@@ -192,7 +193,10 @@ export default function BreatheTool() {
               This breath is always here when you need it.
             </p>
           </Reveal>
-          <Reveal delay={0.55} className="mt-10 flex flex-col items-center gap-2">
+          <Reveal delay={0.5} className="mt-8 w-full">
+            <ReflectionPrompt />
+          </Reveal>
+          <Reveal delay={0.75} className="mt-8 flex flex-col items-center gap-2">
             <Button onClick={() => setPhase('setup')}>Again</Button>
             <Button variant="ghost" onClick={() => nav.back()}>
               I’m done

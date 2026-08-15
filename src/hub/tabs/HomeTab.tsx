@@ -11,6 +11,7 @@ import { PROGRAMMES } from '../../data/programmes';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import { PHASE, phaseFor } from '../../lib/greeting';
+import { TODAY } from '../../data/today';
 
 const today = () =>
   new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -33,6 +34,13 @@ export default function HomeTab() {
     session.reset();
     app.setView('session');
   };
+  // Time-of-day card → straight into a fitting session, one tap (§Phase5).
+  const todayCard = TODAY[phaseFor()];
+  const startToday = () => {
+    session.reset();
+    session.pickPath(todayCard.session);
+    app.setView('session');
+  };
 
   return (
     <div className="screen">
@@ -49,18 +57,18 @@ export default function HomeTab() {
 
         <Reveal delay={0.25} className="mt-8">
           <button
-            onClick={comeHome}
+            onClick={startToday}
             className="glass glass-strong glass-gold w-full px-6 py-6 text-left transition-transform duration-300 active:scale-[0.99]"
             style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
           >
             <div className="eyebrow" style={{ color: 'var(--gold)' }}>
-              A moment for you
+              {todayCard.eyebrow}
             </div>
             <div className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 8 }}>
-              Come home now
+              {todayCard.title}
             </div>
             <div style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
-              One breath. Two minutes. Right here.
+              {todayCard.sub}
             </div>
           </button>
         </Reveal>

@@ -1,5 +1,6 @@
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
+import ReflectionPrompt from '../../ui/ReflectionPrompt';
 
 /** §6.7 Return — the soft landing. */
 export default function Return({ onExit }: { onExit: () => void }) {
@@ -21,7 +22,10 @@ export default function Return({ onExit }: { onExit: () => void }) {
             Take what you need into the rest of your day.
           </p>
         </Reveal>
-        <Reveal delay={0.8} className="mt-10">
+        <Reveal delay={0.7} className="mt-9 w-full">
+          <ReflectionPrompt />
+        </Reveal>
+        <Reveal delay={0.95} className="mt-8">
           <Button onClick={onExit}>Return Home</Button>
         </Reveal>
       </div>

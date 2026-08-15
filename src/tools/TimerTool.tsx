@@ -3,6 +3,7 @@ import { Minus, Plus, Pause, Play } from 'lucide-react';
 import Button from '../ui/Button';
 import Reveal from '../ui/Reveal';
 import ExitButton from '../ui/ExitButton';
+import ReflectionPrompt from '../ui/ReflectionPrompt';
 import { nav } from '../nav/history';
 import { setDepth } from '../store/water';
 import { useBreath } from '../breath/useBreath';
@@ -267,7 +268,10 @@ export default function TimerTool() {
               Take the quiet with you.
             </p>
           </Reveal>
-          <Reveal delay={0.7} className="mt-10 flex flex-col items-center gap-2">
+          <Reveal delay={0.6} className="mt-8 w-full">
+            <ReflectionPrompt />
+          </Reveal>
+          <Reveal delay={0.85} className="mt-8 flex flex-col items-center gap-2">
             <Button onClick={() => setPhase('setup')}>Sit again</Button>
             <Button variant="ghost" onClick={() => nav.back()}>
               I’m done

@@ -150,3 +150,32 @@ export async function clearHistory(): Promise<void> {
     /* ignore */
   }
 }
+
+/**
+ * Reflection trail (§Phase5) — optional one-word moments gathered after a sitting.
+ * A gentle qualitative record, never a streak or a count. On-device (IndexedDB).
+ */
+const REFLECT_KEY = 'come-home:reflections';
+export type Reflection = { ts: number; word: string };
+export async function addReflection(word: string): Promise<void> {
+  try {
+    const list = (await get<Reflection[]>(REFLECT_KEY)) ?? [];
+    await set(REFLECT_KEY, [{ ts: Date.now(), word }, ...list].slice(0, 200)); // ponytail: cap 200
+  } catch {
+    /* ignore */
+  }
+}
+export async function getReflections(): Promise<Reflection[]> {
+  try {
+    return (await get<Reflection[]>(REFLECT_KEY)) ?? [];
+  } catch {
+    return [];
+  }
+}
+export async function clearReflections(): Promise<void> {
+  try {
+    await set(REFLECT_KEY, []);
+  } catch {
+    /* ignore */
+  }
+}

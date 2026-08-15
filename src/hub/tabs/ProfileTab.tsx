@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import Reveal from '../../ui/Reveal';
 import { usePrefs, prefsStore } from '../../store/prefs';
-import { getHistory, clearHistory, type HistoryEntry } from '../../lib/storage';
+import {
+  getHistory,
+  clearHistory,
+  getReflections,
+  clearReflections,
+  type HistoryEntry,
+  type Reflection,
+} from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import type { Checkin } from '../../store/session';
 import { programme, useProgrammeProgress } from '../../store/programme';
@@ -19,6 +26,7 @@ const CHECKIN_PHRASE: Record<Checkin, string> = {
 export default function ProfileTab() {
   const prefs = usePrefs();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [reflections, setReflections] = useState<Reflection[]>([]);
   const [confirmClear, setConfirmClear] = useState(false);
   useProgrammeProgress();
   const prog = PROGRAMMES[0];
@@ -29,6 +37,7 @@ export default function ProfileTab() {
 
   useEffect(() => {
     getHistory().then(setHistory);
+    getReflections().then(setReflections);
   }, []);
 
   const doClear = async () => {
@@ -37,9 +46,24 @@ export default function ProfileTab() {
       return;
     }
     await clearHistory();
+    await clearReflections();
     setHistory([]);
+    setReflections([]);
     setConfirmClear(false);
   };
+
+  // The journey = check-ins + reflections, gathered into one gentle time-line.
+  type Moment = { ts: number; text: string };
+  const moments: Moment[] = [
+    ...history.map((h): Moment => {
+      const last = h.checkins[h.checkins.length - 1];
+      return {
+        ts: h.ts,
+        text: `You arrived ${feelingLabel(h.emotion)}${last && last !== 'prefer-not' ? `, and ${CHECKIN_PHRASE[last]}.` : '.'}`,
+      };
+    }),
+    ...reflections.map((r): Moment => ({ ts: r.ts, text: `You felt ${r.word.toLowerCase()}.` })),
+  ].sort((a, b) => b.ts - a.ts);
 
   return (
     <div className="screen">
@@ -85,25 +109,24 @@ export default function ProfileTab() {
           </button>
         </Reveal>
 
-        {history.length === 0 ? (
+        {moments.length === 0 ? (
           <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)' }}>
             When you come home, your moments will gather here — just for you.
           </p>
         ) : (
-          <div className="flex flex-col gap-3">
-            {history.map((h) => {
-              const last = h.checkins[h.checkins.length - 1];
-              return (
-                <div key={h.ts} className="glass px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
-                  <div className="eyebrow">{new Date(h.ts).toLocaleDateString()}</div>
-                  <div style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', marginTop: 4 }}>
-                    You arrived {feelingLabel(h.emotion)}
-                    {last && last !== 'prefer-not' ? `, and ${CHECKIN_PHRASE[last]}.` : '.'}
-                  </div>
+          <>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>
+              The moments you’ve gathered
+            </div>
+            <div className="flex flex-col gap-3">
+              {moments.map((m) => (
+                <div key={m.ts} className="glass px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
+                  <div className="eyebrow">{new Date(m.ts).toLocaleDateString()}</div>
+                  <div style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', marginTop: 4 }}>{m.text}</div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Settings */}
