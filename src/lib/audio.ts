@@ -24,6 +24,18 @@ class AudioController {
     this.el.currentTime = seconds;
   }
 
+  setLoop(on: boolean) {
+    this.el.loop = on;
+  }
+
+  setVolume(v: number) {
+    this.el.volume = Math.max(0, Math.min(1, v));
+  }
+
+  get volume() {
+    return this.el.volume;
+  }
+
   get paused() {
     return this.el.paused;
   }

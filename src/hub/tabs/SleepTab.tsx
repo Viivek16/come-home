@@ -1,59 +1,73 @@
-import { useEffect } from 'react';
+import { useEffect, type ComponentType } from 'react';
 import { Moon, Waves, Wind } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
-import { session } from '../../store/session';
-import { app } from '../../store/app';
 import { setMood } from '../../store/scene';
-import { SLEEP_ITEMS } from '../../data/sleep';
+import { openSleep } from '../../store/sleep';
+import { SLEEP_TYPES, sleepItemsOfType, type SleepType } from '../../data/sleep';
 
-const KIND_ICON = [Wind, Waves, Moon];
+const TYPE_ICON: Record<SleepType, ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
+  soundscape: Waves,
+  'wind-down': Wind,
+  meditation: Moon,
+};
 
-/** §6 Sleep & Rest — pinned to the night scene. */
+/** §6 Sleep & Rest (§Phase6) — data-driven, grouped by type, pinned to the night
+ *  scene. Cards are always visible; without a real asset they read "coming soon". */
 export default function SleepTab() {
   useEffect(() => {
     setMood('night');
     return () => setMood(null);
   }, []);
 
-  const openPlayer = () => {
-    session.reset();
-    session.pickPath('more-15');
-    app.setView('session');
-  };
-
   return (
     <div className="screen">
       <div className="mx-auto w-full max-w-md py-10">
         <Reveal delay={0.05}>
           <div className="eyebrow">Sleep &amp; rest</div>
-          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 22 }}>
+          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 6 }}>
             Let the night be soft.
           </h1>
         </Reveal>
-        <div className="flex flex-col gap-3">
-          {SLEEP_ITEMS.map((s, i) => {
-            const Icon = KIND_ICON[i % KIND_ICON.length];
-            return (
-              <Reveal key={s.id} delay={0.14 + i * 0.07}>
-                <button
-                  onClick={openPlayer}
-                  className="glass flex w-full items-center gap-4 px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
-                  style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
-                >
-                  <span className="glass grid place-items-center" style={{ width: 44, height: 44, borderRadius: 14 }}>
-                    <Icon size={20} strokeWidth={1.4} color="var(--gold)" />
-                  </span>
-                  <span className="flex-1">
-                    <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', display: 'block' }}>{s.title}</span>
-                    <span className="eyebrow" style={{ display: 'block', marginTop: 4 }}>
-                      {s.kind} · {s.length}
-                    </span>
-                  </span>
-                </button>
+
+        {SLEEP_TYPES.map((group, gi) => {
+          const items = sleepItemsOfType(group.type);
+          if (!items.length) return null;
+          const Icon = TYPE_ICON[group.type];
+          return (
+            <div key={group.type} style={{ marginTop: gi === 0 ? 20 : 30 }}>
+              <Reveal delay={0.12 + gi * 0.06}>
+                <div className="eyebrow">{group.heading}</div>
+                <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 4 }}>{group.blurb}</p>
               </Reveal>
-            );
-          })}
-        </div>
+              <div className="mt-3 flex flex-col gap-3">
+                {items.map((s, i) => (
+                  <Reveal key={s.id} delay={0.16 + gi * 0.06 + i * 0.05}>
+                    <button
+                      onClick={() => openSleep(s)}
+                      className="glass flex w-full items-center gap-4 px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
+                      style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+                    >
+                      <span className="glass grid shrink-0 place-items-center" style={{ width: 44, height: 44, borderRadius: 14 }}>
+                        <Icon size={20} strokeWidth={1.4} color="var(--gold)" />
+                      </span>
+                      <span className="flex-1">
+                        <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', display: 'block' }}>{s.title}</span>
+                        <span className="eyebrow" style={{ display: 'block', marginTop: 4 }}>
+                          {s.kind} · {s.length}
+                        </span>
+                      </span>
+                      {!s.src && (
+                        <span className="eyebrow shrink-0" style={{ color: 'var(--gold)' }}>
+                          Coming soon
+                        </span>
+                      )}
+                    </button>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -64,18 +64,22 @@ audio.on('timeupdate', () => (emit({ position: audio.currentTime }), mediaPositi
 audio.on('error', () => (clearStall(), emit({ error: true, ready: false })));
 
 export const audioControls = {
-  /** Load a track once. No-op if already loaded (preserves position across screens). */
-  ensureLoaded(src: string | null = TRACK) {
+  /** Load a track once. No-op if already loaded (preserves position across screens).
+   *  `loop` makes it a looping soundscape (§Phase6). */
+  ensureLoaded(src: string | null = TRACK, opts: { loop?: boolean } = {}) {
     // No configured source → calm "coming soon", never a frozen transport.
     if (!src) {
       clearStall();
       loadedSrc = null;
+      audio.setLoop(false);
       emit({ error: false, ready: false, position: 0, duration: 0, playing: false, hasSource: false });
       return;
     }
     if (loadedSrc === src) return;
     loadedSrc = src;
     clearStall();
+    audio.setLoop(!!opts.loop);
+    audio.setVolume(1); // restore after any prior sleep-timer fade
     emit({ error: false, ready: false, position: 0, duration: 0, playing: false, hasSource: true });
     audio.load(src);
     stallTimer = setTimeout(() => {
@@ -116,8 +120,27 @@ export const audioControls = {
   stop() {
     audio.pause();
     audio.seek(0);
+    audio.setLoop(false);
+    audio.setVolume(1);
     loadedSrc = null;
     emit({ playing: false, position: 0 });
+  },
+  /** Sleep timer (§Phase6): gently fade the volume to silence, then pause. Restores
+   *  the volume afterward so the next play is at full level.
+   *  ponytail: setInterval step-fade (not rAF) — brief, off the render loop. */
+  fadeOutStop(seconds = 8) {
+    const start = audio.volume;
+    const steps = 24;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      audio.setVolume(start * (1 - i / steps));
+      if (i >= steps) {
+        clearInterval(id);
+        audio.pause();
+        audio.setVolume(start);
+      }
+    }, (seconds * 1000) / steps);
   },
 };
 

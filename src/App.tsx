@@ -7,6 +7,7 @@ import FirstRun from './first-run/FirstRun';
 import Hub from './hub/Hub';
 import ToolHost from './tools/ToolHost';
 import ProgrammeOverview from './programme/ProgrammeOverview';
+import SleepPlayer from './sleep/SleepPlayer';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
@@ -64,6 +65,8 @@ export default function App() {
           <ToolHost />
         ) : view === 'programme' ? (
           <ProgrammeOverview />
+        ) : view === 'sleep' ? (
+          <SleepPlayer />
         ) : (
           <Hub />
         )}
