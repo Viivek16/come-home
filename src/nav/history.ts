@@ -3,6 +3,7 @@ import { app, useView } from '../store/app';
 import { hub, useHubTab, type TabId } from '../store/hub';
 import { session } from '../store/session';
 import { tool, type ToolId } from '../store/tool';
+import { programme } from '../store/programme';
 import { audioControls } from '../audio/audioStore';
 import { firstRunDone } from '../lib/storage';
 
@@ -27,9 +28,11 @@ const locOf = (view: string, tab: TabId): Loc =>
     ? 'session'
     : view === 'tool'
       ? `tool:${tool.which}`
-      : view === 'first-run'
-        ? 'first-run'
-        : `hub:${tab}`;
+      : view === 'programme'
+        ? 'programme'
+        : view === 'first-run'
+          ? 'first-run'
+          : `hub:${tab}`;
 
 // The loc a popstate is currently restoring — so the mirror effect below knows
 // that loc change was a Back (don't re-push) rather than a forward navigation.
@@ -51,16 +54,23 @@ function applyLoc(loc: Loc): Loc {
     app.setView('session');
     return 'session';
   }
+  // Any other destination means we're leaving a session for good — stop its audio,
+  // reset it, and drop any programme-day link (an unfinished day carries no penalty).
+  if (app.view === 'session') {
+    audioControls.stop();
+    session.reset();
+    programme.clearActiveDay();
+  }
   if (loc.startsWith('tool:')) {
     tool.set(loc.slice(5) as ToolId);
     app.setView('tool');
     return loc;
   }
-  const tab = loc.slice(4) as TabId;
-  if (app.view === 'session') {
-    audioControls.stop();
-    session.reset();
+  if (loc === 'programme') {
+    app.setView('programme');
+    return 'programme';
   }
+  const tab = loc.slice(4) as TabId;
   app.setView('hub');
   hub.setTab(tab);
   return `hub:${tab}`;

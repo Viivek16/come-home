@@ -6,6 +6,8 @@ import { usePrefs } from '../../store/prefs';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
 import { openTool } from '../../store/tool';
+import { programme, useProgrammeProgress } from '../../store/programme';
+import { PROGRAMMES } from '../../data/programmes';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import { PHASE, phaseFor } from '../../lib/greeting';
@@ -17,6 +19,11 @@ const today = () =>
 export default function HomeTab() {
   const prefs = usePrefs();
   const [recent, setRecent] = useState<HistoryEntry | null>(null);
+  useProgrammeProgress();
+  const prog = PROGRAMMES[0];
+  const progStarted = programme.isStarted(prog.id);
+  const progComplete = programme.isComplete(prog);
+  const progNext = programme.nextDayIndex(prog);
 
   useEffect(() => {
     getHistory().then((h) => setRecent(h[0] ?? null));
@@ -72,6 +79,25 @@ export default function HomeTab() {
             </button>
           </Reveal>
         )}
+
+        {/* Multi-day programme — offer it, and let people continue where they left off. */}
+        <Reveal delay={0.45}>
+          <button
+            onClick={() => programme.open(prog.id)}
+            className="glass mt-4 w-full px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
+            style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+          >
+            <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+              {progComplete ? 'Your week · complete' : progStarted ? `Continue · day ${progNext + 1}` : 'A gentle week'}
+            </div>
+            <div className="serif" style={{ fontSize: 'var(--t-lg)', marginTop: 4 }}>
+              {prog.title}
+            </div>
+            <div style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
+              Seven small sittings — one a day, in any order.
+            </div>
+          </button>
+        </Reveal>
 
         {/* Quiet, self-directed practices — secondary to the one clear action above. */}
         <Reveal delay={0.55}>

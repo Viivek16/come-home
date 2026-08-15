@@ -4,6 +4,8 @@ import { usePrefs, prefsStore } from '../../store/prefs';
 import { getHistory, clearHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import type { Checkin } from '../../store/session';
+import { programme, useProgrammeProgress } from '../../store/programme';
+import { PROGRAMMES } from '../../data/programmes';
 
 const CHECKIN_PHRASE: Record<Checkin, string> = {
   calmer: 'felt calmer',
@@ -18,6 +20,12 @@ export default function ProfileTab() {
   const prefs = usePrefs();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [confirmClear, setConfirmClear] = useState(false);
+  useProgrammeProgress();
+  const prog = PROGRAMMES[0];
+  const progDone = new Set(programme.completed(prog.id));
+  const progNext = programme.nextDayIndex(prog);
+  const progComplete = programme.isComplete(prog);
+  const progStarted = progDone.size > 0;
 
   useEffect(() => {
     getHistory().then(setHistory);
@@ -41,6 +49,40 @@ export default function ProfileTab() {
           <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 20 }}>
             Your journey
           </h1>
+        </Reveal>
+
+        {/* The programme gives the journey a spine, even before any check-ins (§Phase4). */}
+        <Reveal delay={0.12}>
+          <button
+            onClick={() => programme.open(prog.id)}
+            className="glass glass-gold mb-5 w-full px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
+            style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+          >
+            <div className="eyebrow" style={{ color: 'var(--gold)' }}>
+              {progComplete ? 'Your week · complete' : progStarted ? 'Continue where you left off' : 'A gentle week'}
+            </div>
+            <div className="serif" style={{ fontSize: 'var(--t-lg)', marginTop: 4, marginBottom: 12 }}>
+              {prog.title}
+            </div>
+            <div className="flex items-center gap-2" aria-hidden>
+              {prog.days.map((_, i) => {
+                const isDone = progDone.has(i);
+                const isNext = i === progNext && !progComplete;
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      width: isNext ? 10 : 8,
+                      height: isNext ? 10 : 8,
+                      borderRadius: 999,
+                      background: isDone ? 'var(--gold)' : 'transparent',
+                      border: `1px solid ${isDone || isNext ? 'var(--gold)' : 'var(--hairline)'}`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </button>
         </Reveal>
 
         {history.length === 0 ? (

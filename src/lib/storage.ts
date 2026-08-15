@@ -12,6 +12,7 @@ const HISTORY_KEY = 'come-home:history';
 const TOOLS_KEY = 'come-home:tools';
 const FAVS_KEY = 'come-home:favorites';
 const LIBFILTER_KEY = 'come-home:libFilter';
+const PROGRAMME_KEY = 'come-home:programmes';
 
 const local = (): Storage | null => {
   try {
@@ -97,6 +98,24 @@ export function loadLibFilter(): LibraryFilter {
 }
 export function saveLibFilter(f: LibraryFilter): void {
   local()?.setItem(LIBFILTER_KEY, JSON.stringify(f));
+}
+
+/**
+ * Programme progress (§Phase4), on-device only: completed day indices per
+ * programme id. A plain record of what was done — never a streak or a count to
+ * live up to. Missing days simply aren't in the list.
+ */
+export type ProgrammeProgress = Record<string, number[]>;
+export function loadProgrammeProgress(): ProgrammeProgress {
+  try {
+    const v = JSON.parse(local()?.getItem(PROGRAMME_KEY) ?? '{}');
+    return v && typeof v === 'object' ? (v as ProgrammeProgress) : {};
+  } catch {
+    return {};
+  }
+}
+export function saveProgrammeProgress(p: ProgrammeProgress): void {
+  local()?.setItem(PROGRAMME_KEY, JSON.stringify(p));
 }
 
 export function firstRunDone(): boolean {

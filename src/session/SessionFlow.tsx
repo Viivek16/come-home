@@ -5,6 +5,7 @@ import { setDepth, type DepthGroup } from '../store/water';
 import { useSessionState, type Step } from '../store/session';
 import { addHistory } from '../lib/storage';
 import { nav } from '../nav/history';
+import { programme } from '../store/programme';
 import ExitButton from '../ui/ExitButton';
 import Opening from './screens/Opening';
 import Arrival from './screens/Arrival';
@@ -42,9 +43,11 @@ export default function SessionFlow() {
   // the history handler). § this-pass routing fix.
   const toHub = () => nav.back();
 
-  // Save the completed session to on-device history (§8), then land on the hub.
+  // Save the completed session to on-device history (§8), record the programme day
+  // if this session was launched from one (§Phase4), then land where we came from.
   const finishAndExit = () => {
     void addHistory({ ts: Date.now(), emotion, checkins });
+    programme.completeActiveDay();
     nav.back();
   };
 

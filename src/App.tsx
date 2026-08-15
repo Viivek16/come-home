@@ -6,6 +6,7 @@ import SessionFlow from './session/SessionFlow';
 import FirstRun from './first-run/FirstRun';
 import Hub from './hub/Hub';
 import ToolHost from './tools/ToolHost';
+import ProgrammeOverview from './programme/ProgrammeOverview';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
@@ -61,6 +62,8 @@ export default function App() {
           <SessionFlow />
         ) : view === 'tool' ? (
           <ToolHost />
+        ) : view === 'programme' ? (
+          <ProgrammeOverview />
         ) : (
           <Hub />
         )}
