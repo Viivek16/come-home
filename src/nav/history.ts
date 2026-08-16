@@ -5,6 +5,7 @@ import { session } from '../store/session';
 import { tool, type ToolId } from '../store/tool';
 import { programme } from '../store/programme';
 import { audioControls } from '../audio/audioStore';
+import { player } from '../store/player';
 import { firstRunDone } from '../lib/storage';
 
 /**
@@ -56,12 +57,15 @@ function applyLoc(loc: Loc): Loc {
     app.setView('session');
     return 'session';
   }
-  // Any other destination means we're leaving a session for good — stop its audio,
-  // reset it, and drop any programme-day link (an unfinished day carries no penalty).
-  if (app.view === 'session') {
+  // Leaving the session view. If the player was collapsed to the mini bar, keep
+  // the audio + session state alive so the mini keeps playing and can re-expand
+  // (Phase A). Any other leave means it's over — stop audio, reset, drop the
+  // programme-day link (an unfinished day carries no penalty).
+  if (app.view === 'session' && !player.collapsed) {
     audioControls.stop();
     session.reset();
     programme.clearActiveDay();
+    player.end();
   }
   if (loc.startsWith('tool:')) {
     tool.set(loc.slice(5) as ToolId);

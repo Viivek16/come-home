@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { Heart } from 'lucide-react';
 import Chip from '../../ui/Chip';
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
 import CrisisResources from '../CrisisResources';
 import { session, shouldOfferSupport, useSessionState, type Checkin } from '../../store/session';
+import { favorites, useFavorites } from '../../store/favorites';
 
 const OPTIONS: { id: Checkin; label: string }[] = [
   { id: 'calmer', label: 'Calmer' },
@@ -20,6 +22,12 @@ export default function CheckIn() {
   const [showResources, setShowResources] = useState(false);
 
   const offer = shouldOfferSupport(state) && !dismissed;
+
+  // Save this session to the Sanctuary (favorites) — a quiet keepsake, never a
+  // score. Same prefixed key the Library reads (§Phase3).
+  const favKey = state.path ? `path:${state.path}` : null;
+  const favs = useFavorites();
+  const saved = favKey ? favs.has(favKey) : false;
 
   const pick = (c: Checkin) => {
     session.recordCheckin(c);
@@ -52,6 +60,28 @@ export default function CheckIn() {
             </Reveal>
           ))}
         </div>
+
+        {favKey && (
+          <Reveal delay={0.42} className="mt-5 flex justify-center">
+            <button
+              onClick={() => favorites.toggle(favKey)}
+              aria-pressed={saved}
+              className="flex items-center gap-2 transition-transform duration-300 active:scale-[0.97]"
+              style={{
+                padding: '9px 16px',
+                borderRadius: 999,
+                fontSize: 'var(--t-sm)',
+                color: saved ? 'var(--gold)' : 'var(--ink-muted)',
+                border: `1px solid ${saved ? 'rgba(232,201,155,0.4)' : 'var(--hairline)'}`,
+                background: saved ? 'rgba(232,201,155,0.12)' : 'transparent',
+                transitionTimingFunction: 'var(--ease-calm)',
+              }}
+            >
+              <Heart size={16} strokeWidth={1.6} fill={saved ? 'var(--gold)' : 'none'} />
+              {saved ? 'Saved to Sanctuary' : 'Save to Sanctuary'}
+            </button>
+          </Reveal>
+        )}
 
         {offer && (
           <div className="glass glass-gold mt-5 flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-chip)' }}>

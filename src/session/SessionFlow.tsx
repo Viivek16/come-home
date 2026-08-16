@@ -76,7 +76,9 @@ export default function SessionFlow() {
   // every step has a consistent way out that never re-animates or traps the user.
   return (
     <>
-      <ExitButton onExit={toHub} />
+      {/* The music step is the full player — it owns its own top-left collapse
+          control, so the generic exit is hidden there (Phase A). */}
+      {step !== 'music' && <ExitButton onExit={toHub} />}
       <motion.div
         key={step}
         className="min-h-full"

@@ -8,6 +8,7 @@ import Hub from './hub/Hub';
 import ToolHost from './tools/ToolHost';
 import ProgrammeOverview from './programme/ProgrammeOverview';
 import SleepPlayer from './sleep/SleepPlayer';
+import PlayerHost from './audio/PlayerHost';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
@@ -71,6 +72,8 @@ export default function App() {
           <Hub />
         )}
       </div>
+      {/* Docked mini-player + natural-close handler — global, outlives every view. */}
+      <PlayerHost />
     </>
   );
 }

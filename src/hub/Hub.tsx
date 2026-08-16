@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Home, LifeBuoy, Moon, Library, User } from 'lucide-react';
 import TabBar, { type TabItem } from '../ui/TabBar';
 import { hub, useHubTab, type TabId } from '../store/hub';
+import { usePlayer } from '../store/player';
 import { useReducedMotion } from '../lib/motion';
 
 // Lazy-load hub tabs (§12) — each panel is its own chunk.
@@ -24,8 +25,12 @@ const TABS: TabItem[] = [
 export default function Hub() {
   const tab = useHubTab();
   const reduce = useReducedMotion();
+  const { active, collapsed } = usePlayer();
+  // Base clears the floating nav (Phase 7); add room when the mini-player is
+  // docked above it (Phase A).
+  const padBottom = active && collapsed ? 168 : 104;
   return (
-    <div style={{ minHeight: '100%', paddingBottom: 104 }}>
+    <div style={{ minHeight: '100%', paddingBottom: padBottom }}>
       <Suspense fallback={<div className="screen" />}>
         <motion.div
           key={tab}

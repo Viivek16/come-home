@@ -6,6 +6,7 @@ import { nav } from '../nav/history';
 import { setMood } from '../store/scene';
 import { setDepth } from '../store/water';
 import { audioControls } from '../audio/audioStore';
+import { player } from '../store/player';
 import { useSleepItem } from '../store/sleep';
 
 const SLEEP_TIMERS = [0, 15, 30, 45]; // minutes; 0 = off
@@ -30,8 +31,11 @@ export default function SleepPlayer() {
 
   // Load this item's source (soundscapes loop). A null src → Transport shows
   // "coming soon"; a real src later just plays. No code change needed.
+  // The sleep player takes over the single shared audio element, so end any
+  // collapsed session player first (ponytail: single-audio design → one owner).
   useEffect(() => {
     if (!item) return;
+    player.end();
     audioControls.ensureLoaded(item.src, { loop: item.type === 'soundscape' });
   }, [item]);
 

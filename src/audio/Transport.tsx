@@ -8,12 +8,12 @@ const fmt = (s: number) => {
   return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 };
 
-function SkipButton({ dir, onClick, disabled = false }: { dir: 'back' | 'fwd'; onClick: () => void; disabled?: boolean }) {
+function SkipButton({ dir, secs, onClick, disabled = false }: { dir: 'back' | 'fwd'; secs: number; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      aria-label={dir === 'back' ? 'Back 10 seconds' : 'Forward 10 seconds'}
+      aria-label={dir === 'back' ? `Back ${secs} seconds` : `Forward ${secs} seconds`}
       className="glass grid place-items-center transition-transform duration-300 active:scale-[0.94]"
       style={{ width: 52, height: 52, borderRadius: 999, color: 'var(--ink)', opacity: disabled ? 0.4 : 1, transitionTimingFunction: 'var(--ease-calm)' }}
     >
@@ -22,19 +22,32 @@ function SkipButton({ dir, onClick, disabled = false }: { dir: 'back' | 'fwd'; o
           <path d="M9 5L4 9l5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M4 9h9a6 6 0 1 1-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span style={{ position: 'absolute', fontSize: 8, fontWeight: 500, top: 9, color: 'var(--ink-muted)' }}>10</span>
+        <span style={{ position: 'absolute', fontSize: 8, fontWeight: 500, top: 9, color: 'var(--ink-muted)' }}>{secs}</span>
       </span>
     </button>
   );
 }
 
 /** Shared transport (§6.4/§6.5). Cinematic: optional big time, gold play with
- *  glow, circular glass ±10s, thin gold seek. Native range = keyboard seek (§10). */
-export default function Transport({ bigTime = false, favKey }: { bigTime?: boolean; favKey?: string }) {
+ *  glow, circular glass ±Ns, thin gold seek. Native range = keyboard seek (§10).
+ *  `skip` = jump size in seconds (default 10; the session player uses 15).
+ *  `remaining` shows time left on the right instead of total duration. */
+export default function Transport({
+  bigTime = false,
+  favKey,
+  skip = 10,
+  remaining = false,
+}: {
+  bigTime?: boolean;
+  favKey?: string;
+  skip?: number;
+  remaining?: boolean;
+}) {
   const { playing, position, duration, error, hasSource } = useAudio();
   // No configured source, or the source failed/stalled → calm "coming soon".
   const unavailable = !hasSource || error;
   const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
+  const rightTime = remaining ? `-${fmt(Math.max(0, duration - position))}` : fmt(duration);
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
@@ -48,7 +61,7 @@ export default function Transport({ bigTime = false, favKey }: { bigTime?: boole
       )}
 
       <div className="flex items-center gap-8">
-        <SkipButton dir="back" onClick={() => audioControls.skip(-10)} disabled={unavailable} />
+        <SkipButton dir="back" secs={skip} onClick={() => audioControls.skip(-skip)} disabled={unavailable} />
 
         <button
           onClick={() => audioControls.toggle()}
@@ -78,7 +91,7 @@ export default function Transport({ bigTime = false, favKey }: { bigTime?: boole
           )}
         </button>
 
-        <SkipButton dir="fwd" onClick={() => audioControls.skip(10)} disabled={unavailable} />
+        <SkipButton dir="fwd" secs={skip} onClick={() => audioControls.skip(skip)} disabled={unavailable} />
       </div>
 
       <div className="w-full">
@@ -97,7 +110,7 @@ export default function Transport({ bigTime = false, favKey }: { bigTime?: boole
         />
         <div className="mt-1 flex justify-between eyebrow">
           <span>{fmt(position)}</span>
-          <span>{fmt(duration)}</span>
+          <span>{rightTime}</span>
         </div>
       </div>
 
