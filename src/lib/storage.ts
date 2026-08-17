@@ -118,6 +118,19 @@ export function saveProgrammeProgress(p: ProgrammeProgress): void {
   local()?.setItem(PROGRAMME_KEY, JSON.stringify(p));
 }
 
+/**
+ * Last arrival state (§Phase C), on-device. Written when someone checks in, so a
+ * session recommendation / the reflection trail can read it later. A quiet record
+ * of the most recent arrival — never a streak or a count.
+ */
+const LAST_ARRIVAL_KEY = 'come-home:lastArrival';
+export function saveLastArrival(e: Emotion): void {
+  local()?.setItem(LAST_ARRIVAL_KEY, e);
+}
+export function loadLastArrival(): Emotion | null {
+  return (local()?.getItem(LAST_ARRIVAL_KEY) as Emotion | null) ?? null;
+}
+
 export function firstRunDone(): boolean {
   return local()?.getItem(FIRSTRUN_KEY) === '1';
 }

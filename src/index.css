@@ -25,7 +25,9 @@
   --t-xl: 1.8rem;
   --t-2xl: 2.4rem;
 
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  /* Editorial display serif (§Phase C) — Fraunces (OFL), loaded in index.html.
+     Optical sizing on the .serif classes lifts titles at large sizes. */
+  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
 
   --radius-card: 16px;
@@ -64,11 +66,13 @@ body {
 .serif {
   font-family: var(--font-serif);
   font-weight: 300;
+  font-optical-sizing: auto;
 }
 .serif-italic {
   font-family: var(--font-serif);
   font-weight: 300;
   font-style: italic;
+  font-optical-sizing: auto;
 }
 
 /* Eyebrow / label — Inter 400, tracked, uppercase, muted (§3) */
