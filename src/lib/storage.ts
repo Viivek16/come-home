@@ -192,3 +192,52 @@ export async function clearReflections(): Promise<void> {
     /* ignore */
   }
 }
+
+/**
+ * Journal (§Phase F) — longer private writing, prompted or blank. On-device only
+ * (IndexedDB); never shared, never uploaded. Entries are gently editable and
+ * deletable. A quiet page, never a log to keep up — no counter, no streak.
+ */
+const JOURNAL_KEY = 'come-home:journal';
+export type JournalEntry = { id: string; ts: number; prompt?: string; text: string };
+
+const newId = (): string =>
+  (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+export async function getJournal(): Promise<JournalEntry[]> {
+  try {
+    const list = (await get<JournalEntry[]>(JOURNAL_KEY)) ?? [];
+    return [...list].sort((a, b) => b.ts - a.ts); // newest first
+  } catch {
+    return [];
+  }
+}
+
+/** Create or update an entry (upsert by id). Returns the saved entry. */
+export async function saveJournalEntry(
+  draft: { id?: string; prompt?: string; text: string },
+): Promise<JournalEntry> {
+  const entry: JournalEntry = {
+    id: draft.id ?? newId(),
+    ts: Date.now(),
+    prompt: draft.prompt,
+    text: draft.text,
+  };
+  try {
+    const list = (await get<JournalEntry[]>(JOURNAL_KEY)) ?? [];
+    const rest = list.filter((e) => e.id !== entry.id);
+    await set(JOURNAL_KEY, [entry, ...rest].slice(0, 300)); // ponytail: cap 300 entries
+  } catch {
+    /* ignore — a failed write never blocks the writer */
+  }
+  return entry;
+}
+
+export async function deleteJournalEntry(id: string): Promise<void> {
+  try {
+    const list = (await get<JournalEntry[]>(JOURNAL_KEY)) ?? [];
+    await set(JOURNAL_KEY, list.filter((e) => e.id !== id));
+  } catch {
+    /* ignore */
+  }
+}

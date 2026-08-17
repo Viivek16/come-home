@@ -9,6 +9,7 @@ import ToolHost from './tools/ToolHost';
 import ProgrammeOverview from './programme/ProgrammeOverview';
 import SleepPlayer from './sleep/SleepPlayer';
 import Sanctuary from './sanctuary/Sanctuary';
+import Journal from './journal/Journal';
 import PlayerHost from './audio/PlayerHost';
 import { useView } from './store/app';
 import { setDepth } from './store/water';
@@ -71,6 +72,8 @@ export default function App() {
           <SleepPlayer />
         ) : view === 'sanctuary' ? (
           <Sanctuary />
+        ) : view === 'journal' ? (
+          <Journal />
         ) : (
           <Hub />
         )}

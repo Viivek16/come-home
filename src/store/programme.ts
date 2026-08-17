@@ -50,7 +50,7 @@ export const programme = {
     const p = programmeById(programmeId);
     if (!p) return;
     const day = p.days[dayIndex];
-    if (!day) return;
+    if (!day?.session) return; // coming-soon shells have no playable session
     activeDay = { programmeId, dayIndex };
     session.reset();
     session.pickPath(day.session);

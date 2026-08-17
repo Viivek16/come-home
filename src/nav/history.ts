@@ -35,9 +35,11 @@ const locOf = (view: string, tab: TabId): Loc =>
           ? 'sleep'
           : view === 'sanctuary'
             ? 'sanctuary'
-            : view === 'first-run'
-              ? 'first-run'
-              : `hub:${tab}`;
+            : view === 'journal'
+              ? 'journal'
+              : view === 'first-run'
+                ? 'first-run'
+                : `hub:${tab}`;
 
 // The loc a popstate is currently restoring — so the mirror effect below knows
 // that loc change was a Back (don't re-push) rather than a forward navigation.
@@ -85,6 +87,10 @@ function applyLoc(loc: Loc): Loc {
   if (loc === 'sanctuary') {
     app.setView('sanctuary');
     return 'sanctuary';
+  }
+  if (loc === 'journal') {
+    app.setView('journal');
+    return 'journal';
   }
   const tab = loc.slice(4) as TabId;
   app.setView('hub');
