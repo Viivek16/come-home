@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useBreath } from '../breath/useBreath';
 import { prefersReduced } from '../lib/motion';
 import { useMood, type Mood } from '../store/scene';
+import { useView } from '../store/app';
+import { useSessionState } from '../store/session';
 import { MOODS, STAR_FIELD, CLOUD_FIELD, FIREFLY_FIELD, type Palette } from './moods';
+
+// Foreground reeds at the shoreline (L6). Clustered at the edges so the centre —
+// where the breath ring / session copy sits — stays open. This is the one layer
+// that breathes with the app (§7).
+const REEDS = ['M6 16 Q5 8 7 2', 'M9 16 Q10 7 8 3', 'M12 16 Q11 9 13 4', 'M88 16 Q89 8 87 2', 'M91 16 Q90 7 92 3', 'M94 16 Q95 9 93 4'];
 
 // Deterministic drift tables so birds/leaves never jump between renders.
 const BIRD_FIELD = [
@@ -27,6 +34,7 @@ function SceneArt({ palette }: { palette: Palette }) {
   const b = useBreath();
   const p = palette;
   const glow = 0.5 + b * 0.5;
+  const sway = 1 + b * 0.015; // §7 L6 — inhale lifts the reeds, exhale releases
 
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} aria-hidden>
@@ -157,6 +165,16 @@ function SceneArt({ palette }: { palette: Palette }) {
           <path key={i} d={`M${x} 40 L${x - 2} 34 L${x} 30 L${x + 2} 34 Z`} fill={p.tree} />
         ))}
       </svg>
+      {/* L6 foreground reeds at the shoreline — the single breath-synced layer
+          (transform-origin: bottom, scaleY on the shared clock). Frozen under
+          reduced motion for free, since the breath value holds at 0.5 there. */}
+      <div className="scene-reeds" style={{ transform: `scaleY(${sway})` }}>
+        <svg viewBox="0 0 100 16" preserveAspectRatio="none" width="100%" height="100%" aria-hidden>
+          {REEDS.map((d, i) => (
+            <path key={i} d={d} stroke={p.tree} strokeWidth={0.7} fill="none" strokeLinecap="round" />
+          ))}
+        </svg>
+      </div>
       {/* the body reflected on the waterline — a soft swaying shimmer */}
       {p.reflect && (
         <span
@@ -185,6 +203,11 @@ export default function Scene() {
   const [layers, setLayers] = useState<Layer[]>([{ id: 0, mood }]);
   const idRef = useRef(0);
   const reduced = prefersReduced();
+  // §9 player variant: the full session player (the `music` step) shapes the same
+  // global backdrop into a 60vh top band that melts into the controls (CSS mask).
+  const view = useView();
+  const { step } = useSessionState();
+  const player = view === 'session' && step === 'music';
 
   useEffect(() => {
     if (layers[layers.length - 1]?.mood === mood) return;
@@ -198,7 +221,7 @@ export default function Scene() {
   }, [mood]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.7 }} aria-hidden>
+    <div className={`time-scene${player ? ' time-scene--player' : ''}`} aria-hidden>
       {layers.map((l, i) => (
         <div
           key={l.id}

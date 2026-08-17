@@ -52,14 +52,30 @@ export function bandMood(b: TimeBand): Mood {
 // Reactive current band, refreshed each minute so an app left open crosses a
 // boundary on its own. One clock, shared by the water, the scene and the hub.
 let current = getTimeBand();
+// DEV-only manual override (§Phase4 §10). While set, the wall-clock refreshers
+// below stand down so a forced band sticks. Always false in prod — nothing sets it.
+let overridden = false;
 const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
+
 if (typeof window !== 'undefined') {
+  // Cross a boundary while the app sits open…
   setInterval(() => {
+    if (overridden) return;
     const next = getTimeBand();
     if (next === current) return;
     current = next;
-    listeners.forEach((l) => l());
+    notify();
   }, 60_000);
+  // …and re-check when a backgrounded PWA returns to the foreground (§4) — it may
+  // have skipped hours of intervals while hidden.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || overridden) return;
+    const next = getTimeBand();
+    if (next === current) return;
+    current = next;
+    notify();
+  });
 }
 
 /** Imperative read for the water render loop (no React re-render). */
@@ -79,10 +95,36 @@ export function useTimeBand(): TimeBand {
 // interval corrects `current` on the next tick, so a mock never sticks.
 export function __setBandForTest(b: TimeBand | null) {
   current = b ?? getTimeBand();
-  listeners.forEach((l) => l());
+  notify();
 }
+
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  // Dev-only QA override (§Phase4 §10): ?tod=dawn|day|dusk|night|auto, persisted to
+  // localStorage under ch_tod_override so it survives reloads. The four QA buckets
+  // map to a representative band, which drives the illustrated mood AND the water
+  // palette together. This whole block is import.meta.env.DEV-guarded, so it is
+  // dead-code-eliminated from production builds — the override cannot exist there.
+  const KEY = 'ch_tod_override';
+  const TOD_BAND: Record<string, TimeBand> = { dawn: 'dawn', day: 'midday', dusk: 'dusk', night: 'night' };
+  const applyTod = (tod: string | null) => {
+    if (!tod || tod === 'auto') {
+      localStorage.removeItem(KEY);
+      overridden = false;
+      current = getTimeBand();
+    } else if (tod in TOD_BAND) {
+      localStorage.setItem(KEY, tod);
+      overridden = true;
+      current = TOD_BAND[tod];
+    } else {
+      return; // ignore anything that isn't a known bucket
+    }
+    notify();
+  };
+  const q = new URLSearchParams(window.location.search).get('tod');
+  applyTod(q ?? localStorage.getItem(KEY));
+
   const w = window as unknown as Record<string, unknown>;
   w.__setBand = __setBandForTest;
   w.__getTimeBand = getTimeBand;
+  w.__setTod = applyTod;
 }

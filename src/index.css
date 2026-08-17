@@ -140,6 +140,33 @@ body {
 }
 
 /* ---- Scene animations ---- */
+/* Global illustrated backdrop shell. Ambient (Home + most views) = full viewport;
+   player = a 60vh top band that melts into the controls via a mask (§Phase4 §9). */
+.time-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.time-scene--player {
+  bottom: auto;
+  height: 60vh;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 100%);
+}
+/* L6 foreground reeds — anchored to the shoreline, swayed by the breath clock
+   (scaleY inline, origin bottom). The tiny scale change is the only motion. */
+.scene-reeds {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 55%;
+  height: 12%;
+  transform-origin: bottom;
+  will-change: transform;
+  pointer-events: none;
+}
 @keyframes scene-in {
   from {
     opacity: 0;
