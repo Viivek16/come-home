@@ -1,10 +1,11 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /**
  * Atmospheric, full-bleed cover card (§Phase C). Cover area (a Still-Water tint,
  * typically tied to the current time band — no stock photos) + tag + title + sub
- * overlaid over a legibility scrim. Reusable: Home uses it now, Library reuses it
- * in Run 2. `accent` gives the one gold-lit primary card per screen (§5).
+ * overlaid over a legibility scrim. Reusable: Home, Library and Sanctuary all use
+ * it. `accent` gives the one gold-lit primary card per screen (§5); `corner` is an
+ * optional top-right slot (e.g. the Sanctuary remove-heart) that sits above the card.
  */
 export default function CoverCard({
   cover,
@@ -14,6 +15,7 @@ export default function CoverCard({
   onClick,
   accent = false,
   minHeight = 132,
+  corner,
   style,
 }: {
   cover: string; // CSS background for the cover (e.g. a band-tinted gradient)
@@ -23,9 +25,11 @@ export default function CoverCard({
   onClick: () => void;
   accent?: boolean;
   minHeight?: number;
+  corner?: ReactNode;
   style?: CSSProperties;
 }) {
   return (
+    <div style={{ position: 'relative' }}>
     <button
       onClick={onClick}
       className={`glass ${accent ? 'glass-strong glass-gold' : ''} w-full text-left transition-transform duration-300 active:scale-[0.99]`}
@@ -74,5 +78,8 @@ export default function CoverCard({
         </div>
       </div>
     </button>
+      {/* corner slot (e.g. remove-heart) — a sibling, not nested in the button */}
+      {corner && <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>{corner}</div>}
+    </div>
   );
 }

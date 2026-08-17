@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Heart } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
+import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { usePrefs, prefsStore } from '../../store/prefs';
 import {
   getHistory,
@@ -106,6 +108,24 @@ export default function ProfileTab() {
                 );
               })}
             </div>
+          </button>
+        </Reveal>
+
+        {/* Sanctuary — the saved collection, also reachable here (§Phase D). */}
+        <Reveal delay={0.15}>
+          <button
+            onClick={openSanctuary}
+            className="glass mb-5 flex w-full items-center gap-3 px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
+            style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+          >
+            <span className="grid shrink-0 place-items-center" style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(232,201,155,0.14)' }}>
+              <Heart size={18} strokeWidth={1.6} color="var(--gold)" fill="var(--gold)" />
+            </span>
+            <span className="flex-1">
+              <span style={{ display: 'block', color: 'var(--ink)', fontSize: 'var(--t-md)' }}>Sanctuary</span>
+              <span className="eyebrow" style={{ display: 'block', marginTop: 2 }}>What you’ve kept close</span>
+            </span>
+            <span aria-hidden style={{ color: 'var(--ink-muted)' }}>→</span>
           </button>
         </Reveal>
 

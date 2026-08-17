@@ -1,21 +1,31 @@
 import { useState } from 'react';
-import { Play, Download, Check, Timer, Wind } from 'lucide-react';
+import { Timer, Wind, Heart } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
 import PracticeCard from '../../ui/PracticeCard';
+import CoverCard from '../../ui/CoverCard';
 import HeartButton from '../../ui/HeartButton';
-import { session, type PathId } from '../../store/session';
+import { session } from '../../store/session';
 import { app } from '../../store/app';
 import { openTool } from '../../store/tool';
+import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { useFavorites } from '../../store/favorites';
 import { LIBRARY_ITEMS, libraryFeelings, inTimeBucket, TIME_BUCKETS, type TimeBucket } from '../../data/library';
 import { PATHS } from '../../data/paths';
 import { loadLibFilter, saveLibFilter, type LibraryFilter } from '../../lib/storage';
+import { stillWaterGradient } from '../../store/water';
+import { useTimeBand } from '../../lib/timeBand';
 
-/** §6 Library (+§Phase3): Saved collection + calm filters over the real data. */
+/**
+ * §6 Library (§Phase D). Browse the real content by felt-state (our categories are
+ * the arrival states — no invented empty categories) and by length; both filters
+ * combine over the real data with a calm empty state. Atmospheric cards throughout.
+ * Saved sessions live in the Sanctuary view.
+ */
 export default function LibraryTab() {
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<LibraryFilter>(() => loadLibFilter());
   const favs = useFavorites();
+  const band = useTimeBand();
+  const cover = stillWaterGradient(band);
 
   const update = (f: Partial<LibraryFilter>) =>
     setFilter((cur) => {
@@ -26,23 +36,16 @@ export default function LibraryTab() {
   const anyFilter = filter.time !== 'all' || filter.feeling !== 'all';
   const clear = () => update({ time: 'all', feeling: 'all' });
 
-  const feelings = libraryFeelings();
+  const feelings = libraryFeelings(); // categories = the felt-states present in the data
   const filtered = LIBRARY_ITEMS.filter(
     (l) => inTimeBucket(l, filter.time as TimeBucket) && (filter.feeling === 'all' || l.feeling === filter.feeling),
   );
 
-  const savedLib = LIBRARY_ITEMS.filter((l) => favs.has(`lib:${l.id}`));
-  const savedPaths = PATHS.filter((p) => favs.has(`path:${p.id}`));
-  const hasSaved = savedLib.length + savedPaths.length > 0;
+  const savedCount = LIBRARY_ITEMS.filter((l) => favs.has(`lib:${l.id}`)).length + PATHS.filter((p) => favs.has(`path:${p.id}`)).length;
 
   const openLibrary = () => {
     session.reset();
     session.pickPath('more-15');
-    app.setView('session');
-  };
-  const openPath = (p: PathId) => {
-    session.reset();
-    session.pickPath(p);
     app.setView('session');
   };
 
@@ -51,14 +54,36 @@ export default function LibraryTab() {
       <div className="mx-auto w-full max-w-md py-10">
         <Reveal delay={0.05}>
           <div className="eyebrow">Library</div>
-          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 22 }}>
+          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 20 }}>
             Find what you need.
           </h1>
         </Reveal>
 
-        {/* Self-directed practices — no content, no narrator (§Phase2). */}
+        {/* Sanctuary — the saved collection lives in its own calm view. */}
         <Reveal delay={0.1}>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>
+          <button
+            onClick={openSanctuary}
+            className="glass glass-gold flex w-full items-center gap-3 px-5 py-4 text-left transition-transform duration-300 active:scale-[0.99]"
+            style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+          >
+            <span className="grid shrink-0 place-items-center" style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(232,201,155,0.14)' }}>
+              <Heart size={18} strokeWidth={1.6} color="var(--gold)" fill="var(--gold)" />
+            </span>
+            <span className="flex-1">
+              <span className="serif" style={{ display: 'block', color: 'var(--ink)', fontSize: 'var(--t-lg)' }}>
+                Sanctuary
+              </span>
+              <span className="eyebrow" style={{ display: 'block', marginTop: 2, color: 'var(--gold)' }}>
+                {savedCount > 0 ? `${savedCount} saved` : 'Your saved sessions'}
+              </span>
+            </span>
+            <span aria-hidden style={{ color: 'var(--ink-muted)' }}>→</span>
+          </button>
+        </Reveal>
+
+        {/* Self-directed practices — no content, no narrator (§Phase2). */}
+        <Reveal delay={0.16}>
+          <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
             Practices
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -67,36 +92,28 @@ export default function LibraryTab() {
           </div>
         </Reveal>
 
-        {/* Saved (§Phase3) — always present so it's easy to re-find; gentle when empty. */}
-        <Reveal delay={0.16}>
-          <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
-            Saved
-          </div>
-          {hasSaved ? (
-            <div className="flex flex-col gap-3">
-              {savedLib.map((l) => (
-                <SavedRow key={`lib-${l.id}`} title={l.title} meta={`${l.feeling} · ${l.length}`} favKey={`lib:${l.id}`} onPlay={openLibrary} />
-              ))}
-              {savedPaths.map((p) => (
-                <SavedRow key={`path-${p.id}`} title={p.title} meta={`Guided · ${p.duration}`} favKey={`path:${p.id}`} onPlay={() => openPath(p.id)} />
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', lineHeight: 1.5 }}>
-              Tap the heart on anything that helps. It’ll be here, waiting, whenever you come back.
-            </p>
-          )}
-        </Reveal>
-
-        {/* Filters (§Phase3) — quiet, additive, clearable. */}
+        {/* Browse by felt-state — category chips with atmospheric cover thumbnails. */}
         <Reveal delay={0.22}>
           <div className="flex items-center justify-between" style={{ marginTop: 26, marginBottom: 10 }}>
-            <span className="eyebrow">Guided</span>
+            <span className="eyebrow">Browse by feeling</span>
             {anyFilter && (
               <button onClick={clear} className="eyebrow" style={{ color: 'var(--gold)' }} aria-label="Clear filters">
                 Clear
               </button>
             )}
+          </div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+            <CategoryChip label="All" cover={cover} on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })} />
+            {feelings.map((f) => (
+              <CategoryChip key={f} label={f} cover={cover} on={filter.feeling === f} onClick={() => update({ feeling: f })} />
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Duration — combines with the feeling above. */}
+        <Reveal delay={0.28}>
+          <div className="eyebrow" style={{ marginTop: 22, marginBottom: 10 }}>
+            How much time
           </div>
           <div className="flex flex-wrap gap-2">
             {TIME_BUCKETS.map((b) => (
@@ -105,53 +122,26 @@ export default function LibraryTab() {
               </FilterChip>
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <FilterChip on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })}>
-              Any feeling
-            </FilterChip>
-            {feelings.map((f) => (
-              <FilterChip key={f} on={filter.feeling === f} onClick={() => update({ feeling: f })}>
-                {f}
-              </FilterChip>
-            ))}
-          </div>
         </Reveal>
 
-        {/* Results */}
+        {/* Results — atmospheric cards; calm, non-judgmental empty state. */}
         {filtered.length > 0 ? (
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-4">
             {filtered.map((l, i) => (
-              <Reveal key={l.id} delay={0.28 + i * 0.05}>
-                <div className="glass flex items-center gap-3 px-4 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
-                  <button
-                    onClick={openLibrary}
-                    aria-label={`Play ${l.title}`}
-                    className="glass grid shrink-0 place-items-center transition-transform duration-300 active:scale-[0.94]"
-                    style={{ width: 46, height: 46, borderRadius: 999, transitionTimingFunction: 'var(--ease-calm)' }}
-                  >
-                    <Play size={18} strokeWidth={1.6} color="var(--gold)" fill="var(--gold)" />
-                  </button>
-                  <button onClick={openLibrary} className="flex-1 text-left">
-                    <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{l.title}</span>
-                    <span className="eyebrow" style={{ display: 'block', marginTop: 4 }}>
-                      {l.feeling} · {l.length}
-                    </span>
-                  </button>
-                  <HeartButton favKey={`lib:${l.id}`} label={l.title} />
-                  <button
-                    onClick={() => setSaved((s) => ({ ...s, [l.id]: true }))}
-                    aria-label={saved[l.id] ? 'Saved for offline' : 'Save for offline'}
-                    className="shrink-0 p-2"
-                    style={{ color: saved[l.id] ? 'var(--gold)' : 'var(--ink-muted)' }}
-                  >
-                    {saved[l.id] ? <Check size={18} strokeWidth={1.8} /> : <Download size={18} strokeWidth={1.5} />}
-                  </button>
-                </div>
+              <Reveal key={l.id} delay={0.32 + i * 0.05}>
+                <CoverCard
+                  cover={cover}
+                  tag={`Guided · ${l.length}`}
+                  title={l.title}
+                  sub={l.feeling}
+                  onClick={openLibrary}
+                  corner={<HeartButton favKey={`lib:${l.id}`} label={l.title} />}
+                />
               </Reveal>
             ))}
           </div>
         ) : (
-          <p className="mt-4" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', lineHeight: 1.5 }}>
+          <p className="mt-5" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', lineHeight: 1.5 }}>
             Nothing here for that just now. Try a longer time, or{' '}
             <button onClick={clear} style={{ color: 'var(--gold)' }}>
               see everything
@@ -161,6 +151,41 @@ export default function LibraryTab() {
         )}
       </div>
     </div>
+  );
+}
+
+function CategoryChip({ label, cover, on, onClick }: { label: string; cover: string; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={on}
+      className="shrink-0 transition-transform duration-300 active:scale-[0.97]"
+      style={{ width: 92, textAlign: 'center', transitionTimingFunction: 'var(--ease-calm)' }}
+    >
+      <span
+        style={{
+          display: 'block',
+          height: 60,
+          borderRadius: 14,
+          background: cover,
+          border: `1px solid ${on ? 'rgba(232,201,155,0.55)' : 'var(--hairline)'}`,
+          boxShadow: on ? '0 0 0 1px rgba(232,201,155,0.35), 0 0 18px rgba(232,201,155,0.16)' : 'none',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <span
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 80% 15%, rgba(232,201,155,0.22), transparent 55%)' }}
+        />
+      </span>
+      <span
+        className="eyebrow"
+        style={{ display: 'block', marginTop: 6, color: on ? 'var(--gold)' : 'var(--ink-muted)', textTransform: 'none', letterSpacing: 0, fontSize: 'var(--t-xs)' }}
+      >
+        {label}
+      </span>
+    </button>
   );
 }
 
@@ -182,27 +207,5 @@ function FilterChip({ on, onClick, children }: { on: boolean; onClick: () => voi
     >
       {children}
     </button>
-  );
-}
-
-function SavedRow({ title, meta, favKey, onPlay }: { title: string; meta: string; favKey: string; onPlay: () => void }) {
-  return (
-    <div className="glass-strong glass flex items-center gap-3 px-4 py-3.5" style={{ borderRadius: 'var(--radius-card)' }}>
-      <button
-        onClick={onPlay}
-        aria-label={`Play ${title}`}
-        className="glass grid shrink-0 place-items-center transition-transform duration-300 active:scale-[0.94]"
-        style={{ width: 42, height: 42, borderRadius: 999, transitionTimingFunction: 'var(--ease-calm)' }}
-      >
-        <Play size={16} strokeWidth={1.6} color="var(--gold)" fill="var(--gold)" />
-      </button>
-      <button onClick={onPlay} className="flex-1 text-left">
-        <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{title}</span>
-        <span className="eyebrow" style={{ display: 'block', marginTop: 3 }}>
-          {meta}
-        </span>
-      </button>
-      <HeartButton favKey={favKey} label={title} />
-    </div>
   );
 }
