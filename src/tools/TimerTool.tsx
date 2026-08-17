@@ -4,9 +4,11 @@ import Button from '../ui/Button';
 import Reveal from '../ui/Reveal';
 import ExitButton from '../ui/ExitButton';
 import ReflectionPrompt from '../ui/ReflectionPrompt';
+import FeelingCheck from '../ui/FeelingCheck';
 import { nav } from '../nav/history';
 import { setDepth } from '../store/water';
 import { useBreath } from '../breath/useBreath';
+import type { Checkin } from '../store/session';
 import { toolPrefsStore, useToolPrefs } from '../store/toolPrefs';
 import { tones, unlockTones } from '../audio/tones';
 
@@ -46,6 +48,7 @@ export default function TimerTool() {
   const total = minutes * 60;
   const [remaining, setRemaining] = useState(total);
   const [paused, setPaused] = useState(false);
+  const [feeling, setFeeling] = useState<Checkin | null>(null); // Run-1 gentle close
 
   // Timekeeping from wall-clock so background throttling never drifts the sit.
   const endAtRef = useRef(0);
@@ -83,6 +86,7 @@ export default function TimerTool() {
       timerIntervalMin: intervalMin,
     });
     unlockTones(); // this tap satisfies autoplay so the end tone can sound later
+    setFeeling(null);
     const now = Date.now();
     endAtRef.current = now + total * 1000;
     nextBellRef.current = intervalMin > 0 ? now + intervalMin * 60 * 1000 : 0;
@@ -231,7 +235,9 @@ export default function TimerTool() {
                 style={{ transition: 'stroke-dashoffset 0.95s linear' }}
               />
             </svg>
-            <div className="serif" style={{ fontSize: '3.4rem', fontWeight: 300, letterSpacing: '0.02em', color: 'var(--ink)' }} aria-live="off">
+            {/* Remaining time, deliberately subtle so it never becomes a clock to
+                watch — the breath halo + arc are the focus (§Phase E). */}
+            <div className="serif" style={{ fontSize: 'var(--t-lg)', fontWeight: 300, letterSpacing: '0.04em', color: 'var(--ink-muted)' }} aria-live="off">
               {fmt(remaining)}
             </div>
           </div>
@@ -252,26 +258,13 @@ export default function TimerTool() {
       )}
 
       {phase === 'done' && (
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center py-10 text-center">
-          <Reveal delay={0.1}>
-            <h2 className="serif" style={{ fontSize: 'var(--t-2xl)' }}>
-              You stayed.
-            </h2>
-          </Reveal>
-          <Reveal delay={0.32}>
-            <p className="serif" style={{ color: 'var(--gold)', marginTop: 10, fontSize: 'var(--t-lg)' }}>
-              That’s enough.
-            </p>
-          </Reveal>
-          <Reveal delay={0.5}>
-            <p style={{ color: 'var(--ink-muted)', marginTop: 12, fontSize: 'var(--t-md)' }}>
-              Take the quiet with you.
-            </p>
-          </Reveal>
-          <Reveal delay={0.6} className="mt-8 w-full">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+          {/* The same gentle close as the player (§Phase E) — no celebration. */}
+          <FeelingCheck selected={feeling} onPick={setFeeling} />
+          <Reveal delay={0.4} className="mt-6 w-full">
             <ReflectionPrompt />
           </Reveal>
-          <Reveal delay={0.85} className="mt-8 flex flex-col items-center gap-2">
+          <Reveal delay={0.6} className="mt-8 flex flex-col items-center gap-2">
             <Button onClick={() => setPhase('setup')}>Sit again</Button>
             <Button variant="ghost" onClick={() => nav.back()}>
               I’m done

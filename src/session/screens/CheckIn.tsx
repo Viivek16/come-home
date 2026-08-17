@@ -1,18 +1,11 @@
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
-import Chip from '../../ui/Chip';
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
+import FeelingCheck from '../../ui/FeelingCheck';
 import CrisisResources from '../CrisisResources';
 import { session, shouldOfferSupport, useSessionState, type Checkin } from '../../store/session';
 import { favorites, useFavorites } from '../../store/favorites';
-
-const OPTIONS: { id: Checkin; label: string }[] = [
-  { id: 'calmer', label: 'Calmer' },
-  { id: 'better', label: 'A little better' },
-  { id: 'same', label: 'The same' },
-  { id: 'struggling', label: 'Still struggling' },
-];
 
 /** §6.6 Gentle check-in. Stored privately. Soft crisis row when warranted. */
 export default function CheckIn() {
@@ -42,24 +35,7 @@ export default function CheckIn() {
   return (
     <div className="screen">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-        <Reveal delay={0.05}>
-          <h2 className="serif" style={{ fontSize: 'var(--t-xl)' }}>
-            How are you feeling now?
-          </h2>
-          <p style={{ color: 'var(--ink-muted)', marginTop: 6, marginBottom: 22, fontSize: 'var(--t-md)' }}>
-            There's no right answer.
-          </p>
-        </Reveal>
-
-        <div className="flex flex-col gap-3">
-          {OPTIONS.map((o, i) => (
-            <Reveal key={o.id} delay={0.14 + i * 0.06}>
-              <Chip selected={selected === o.id} onClick={() => pick(o.id)}>
-                {o.label}
-              </Chip>
-            </Reveal>
-          ))}
-        </div>
+        <FeelingCheck selected={selected} onPick={pick} />
 
         {favKey && (
           <Reveal delay={0.42} className="mt-5 flex justify-center">

@@ -9,7 +9,8 @@ import { useReducedMotion } from '../lib/motion';
 import { PATTERNS, patternById } from '../breath/patterns';
 import { toolPrefsStore, useToolPrefs } from '../store/toolPrefs';
 
-const DURATIONS = [3, 5, 10]; // minutes
+const DURATIONS = [1, 2, 3, 0]; // minutes; 0 = open-ended (§Phase E)
+const durationLabel = (m: number) => (m === 0 ? 'Open' : `${m} min`);
 const SMALL = 0.62;
 const LARGE = 1;
 const STILL = 0.82; // reduced-motion resting size
@@ -21,7 +22,7 @@ export default function BreatheTool() {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<Phase>('setup');
   const [patternId, setPatternId] = useState(saved.breathePattern);
-  const [minutes, setMinutes] = useState(saved.breatheMinutes);
+  const [minutes, setMinutes] = useState(() => (DURATIONS.includes(saved.breatheMinutes) ? saved.breatheMinutes : 3));
 
   const pattern = patternById(patternId);
   const [phaseIdx, setPhaseIdx] = useState(0);
@@ -56,16 +57,20 @@ export default function BreatheTool() {
     };
     applyPhase();
 
-    const endId = setTimeout(() => {
-      cancelled = true;
-      clearTimeout(stepId);
-      setPhase('done');
-    }, minutes * 60 * 1000);
+    // Open-ended (minutes === 0) → no auto-end; the user finishes when ready.
+    const endId =
+      minutes > 0
+        ? setTimeout(() => {
+            cancelled = true;
+            clearTimeout(stepId);
+            setPhase('done');
+          }, minutes * 60 * 1000)
+        : undefined;
 
     return () => {
       cancelled = true;
       clearTimeout(stepId);
-      clearTimeout(endId);
+      if (endId) clearTimeout(endId);
     };
   }, [phase, pattern, reduce, minutes]);
 
@@ -152,7 +157,7 @@ export default function BreatheTool() {
                       transitionTimingFunction: 'var(--ease-calm)',
                     }}
                   >
-                    {m} min
+                    {durationLabel(m)}
                   </button>
                 );
               })}
@@ -195,8 +200,12 @@ export default function BreatheTool() {
             </div>
           </div>
           <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', marginTop: 40 }}>
-            {pattern.name} · {minutes} min
+            {pattern.name} · {minutes > 0 ? `${minutes} min` : 'open'}
           </p>
+          {/* Finish gently → the soft close (esp. for the open-ended option). */}
+          <Button variant="ghost" onClick={() => setPhase('done')} className="mt-3">
+            Finish
+          </Button>
         </div>
       )}
 
