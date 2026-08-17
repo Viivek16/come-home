@@ -10,7 +10,7 @@ import { programme, useProgrammeProgress } from '../../store/programme';
 import { PROGRAMMES } from '../../data/programmes';
 import { getHistory, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
-import { PHASE, phaseFor } from '../../lib/greeting';
+import { BAND_GREETING, useTimeBand } from '../../lib/timeBand';
 import { TODAY } from '../../data/today';
 
 const today = () =>
@@ -19,6 +19,7 @@ const today = () =>
 /** §6 Home. Editorial welcome + big CTA + a soft recent card. No streaks/counts. */
 export default function HomeTab() {
   const prefs = usePrefs();
+  const band = useTimeBand(); // single time source (§Phase B) — greeting + card agree
   const [recent, setRecent] = useState<HistoryEntry | null>(null);
   useProgrammeProgress();
   const prog = PROGRAMMES[0];
@@ -35,7 +36,7 @@ export default function HomeTab() {
     app.setView('session');
   };
   // Time-of-day card → straight into a fitting session, one tap (§Phase5).
-  const todayCard = TODAY[phaseFor()];
+  const todayCard = TODAY[band];
   const startToday = () => {
     session.reset();
     session.pickPath(todayCard.session);
@@ -50,10 +51,10 @@ export default function HomeTab() {
           {/* Compact greeting (§4): name stays inline, one tighter line, so the
               day card and everything below rise into view sooner. */}
           <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 4, lineHeight: 1.08 }}>
-            {PHASE[phaseFor()].hi}{prefs.name ? `, ${prefs.name}` : ''}
+            {BAND_GREETING[band].hi}{prefs.name ? `, ${prefs.name}` : ''}
           </h1>
           <p style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
-            {PHASE[phaseFor()].sub}
+            {BAND_GREETING[band].sub}
           </p>
         </Reveal>
 

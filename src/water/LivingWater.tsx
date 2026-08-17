@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { breathValue } from '../breath/useBreath';
 import { prefersReduced, useReducedMotion } from '../lib/motion';
-import { targetParams, type WaterParams } from '../store/water';
+import { targetParams, stillWaterGradient, type WaterParams } from '../store/water';
+import { useTimeBand } from '../lib/timeBand';
 
 /**
  * Living Water (§4) — ONE WebGL fragment-shader layer fixed behind the whole app.
@@ -48,7 +49,6 @@ void main(){
 }
 `;
 
-const GLINT: [number, number, number] = [0.91, 0.788, 0.608]; // champagne (§4)
 const MIN_INTERVAL = 1000 / 40; // ~40fps cap
 
 function compile(gl: WebGLRenderingContext, type: number, src: string) {
@@ -66,9 +66,11 @@ export default function LivingWater() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [css, setCss] = useState(false); // true → CSS gradient-water fallback
   const reduced = useReducedMotion(); // re-inits the layer on a runtime toggle
+  const band = useTimeBand(); // reactive time-of-day palette (§Phase B)
 
   useEffect(() => {
-    if (css) return;
+    // Reduced motion → no WebGL loop; a static, band-correct gradient renders below.
+    if (css || reduced) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -109,8 +111,6 @@ export default function LivingWater() {
       top: gl.getUniformLocation(prog, 'u_top'),
       glint: gl.getUniformLocation(prog, 'u_glint'),
     };
-    gl.uniform3fv(u.glint, GLINT);
-
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap DPR to 2 (§4)
       const w = Math.floor(canvas!.clientWidth * dpr);
@@ -126,7 +126,7 @@ export default function LivingWater() {
 
     // Eased-toward-target current params (§4 ~1.2s transition via exp smoothing).
     const t0 = targetParams();
-    const cur: WaterParams = { intensity: t0.intensity, deep: [...t0.deep], top: [...t0.top], speed: t0.speed };
+    const cur: WaterParams = { intensity: t0.intensity, deep: [...t0.deep], top: [...t0.top], glint: [...t0.glint], speed: t0.speed };
 
     function draw(simTime: number) {
       resize();
@@ -135,6 +135,7 @@ export default function LivingWater() {
       gl!.uniform1f(u.intensity, cur.intensity);
       gl!.uniform3fv(u.deep, cur.deep);
       gl!.uniform3fv(u.top, cur.top);
+      gl!.uniform3fv(u.glint, cur.glint);
       gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -179,6 +180,7 @@ export default function LivingWater() {
       for (let i = 0; i < 3; i++) {
         cur.deep[i] += (target.deep[i] - cur.deep[i]) * k;
         cur.top[i] += (target.top[i] - cur.top[i]) * k;
+        cur.glint[i] += (target.glint[i] - cur.glint[i]) * k;
       }
       simTime += dts * cur.speed;
       draw(simTime);
@@ -212,7 +214,11 @@ export default function LivingWater() {
     };
   }, [css, reduced]);
 
-  if (css) return <div className="water-fallback" aria-hidden />;
+  // No WebGL, or reduced motion → a static, band-correct Still-Water gradient
+  // (§Phase B). The drift keyframe still applies for the no-WebGL case; reduced
+  // motion zeroes it via the global rule, so it holds still.
+  if (css || reduced)
+    return <div className="water-fallback" style={{ background: stillWaterGradient(band) }} aria-hidden />;
   return (
     <canvas
       ref={canvasRef}
