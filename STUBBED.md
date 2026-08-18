@@ -3,10 +3,17 @@
 The frontend is built and local-only per spec. These seams are intentionally left
 for a later pass — each is isolated so it drops in without touching the screens.
 
-## 1. Google auth
-- `src/lib/authSeam.ts` — `getUser()/signIn()/signOut()` return a **local guest** now.
-- Wire real Google sign-in through the kept Supabase seam (`src/lib/supabase.ts`,
-  `src/lib/auth.ts`). Profile → "Continue with Google" is a disabled stub.
+## 1. Google auth — DONE (web/PWA), native redirect still stubbed
+- Live: `src/lib/auth.ts` (session + profile store + `signInWithGoogle/signOut/
+  completeOnboarding`), `src/ui/GoogleButton.tsx`, Profile account section, first-run
+  "Continue with Google". Backend: `supabase/migrations/20260818_google_auth.sql`
+  (profiles + `handle_new_user` signup trigger + RLS). Local-first preserved — sign-in
+  is optional; a guest still uses the whole app.
+- **Native seam:** `signInWithGoogle()` redirects to `com.comehome.app://auth-callback`
+  on Capacitor. To finish Android: `npm i @capacitor/browser @capacitor/app`, add an
+  `App.addListener('appUrlOpen', …)` that calls `supabase.auth.exchangeCodeForSession`,
+  and register the `com.comehome.app` scheme + add the same redirect URL in Supabase.
+  Web/PWA works today with no extra setup.
 
 ## 2. Real content library
 - `src/data/{feelings,paths,sleep,library,supportCategories,resources}.ts` are

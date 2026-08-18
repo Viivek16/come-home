@@ -5,6 +5,10 @@ import ReflectionTrail from '../../journey/ReflectionTrail';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { openJournal } from '../../journal/Journal';
 import { usePrefs, prefsStore } from '../../store/prefs';
+import { useAuth, signInWithGoogle, signOut, completeOnboarding } from '../../lib/auth';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import GoogleButton from '../../ui/GoogleButton';
+import Button from '../../ui/Button';
 import { reminders } from '../../lib/reminders';
 import {
   getHistory,
@@ -249,22 +253,88 @@ export default function ProfileTab() {
           Everything you share stays on this device.
         </p>
 
-        <button
-          disabled
-          className="mt-6 w-full"
-          aria-disabled="true"
-          style={{
-            minHeight: 48,
-            borderRadius: 999,
-            border: '1px solid var(--hairline)',
-            color: 'var(--ink-muted)',
-            opacity: 0.55,
-            fontSize: 'var(--t-md)',
-          }}
-        >
-          Continue with Google · coming later
-        </button>
+        <AccountSection />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Optional Google account (§0). Come Home stays local-first — signing in only adds
+ * an identity + server-side profile; check-ins, journal and reflections stay on the
+ * device. Hidden entirely when no backend is configured.
+ */
+function AccountSection() {
+  const { user, loading } = useAuth();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  if (!isSupabaseConfigured || loading) return null;
+
+  // Signed out → offer sign-in.
+  if (user.isGuest) {
+    return (
+      <div className="mt-6">
+        <GoogleButton onClick={signInWithGoogle} />
+        <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-xs)', marginTop: 8, lineHeight: 1.5 }}>
+          Optional — sign in to keep your name across devices. Your check-ins stay on this device.
+        </p>
+      </div>
+    );
+  }
+
+  // Signed in but not onboarded → a gentle one-step welcome that saves to the backend.
+  if (!user.onboarded) {
+    const value = name || user.name;
+    const finish = async () => {
+      setBusy(true);
+      await completeOnboarding(value);
+      setBusy(false);
+    };
+    return (
+      <div className="glass glass-strong mt-6" style={{ borderRadius: 'var(--radius-card)', padding: 22 }}>
+        <p className="serif" style={{ fontSize: 'var(--t-lg)' }}>
+          Welcome{user.name ? `, ${user.name.split(' ')[0]}` : ''}.
+        </p>
+        <label htmlFor="acct-name" style={{ display: 'block', color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 10 }}>
+          What should we call you?
+        </label>
+        <input
+          id="acct-name"
+          type="text"
+          value={value}
+          onChange={(e) => setName(e.target.value)}
+          className="glass mt-2 w-full px-4 py-3"
+          style={{ borderRadius: 'var(--radius-chip)', color: 'var(--ink)', fontSize: 'var(--t-md)' }}
+        />
+        <Button className="mt-4 w-full" onClick={finish} disabled={busy}>
+          {busy ? 'Saving…' : 'This is me'}
+        </Button>
+      </div>
+    );
+  }
+
+  // Signed in and onboarded → account card + sign out.
+  return (
+    <div className="glass mt-6 flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
+      {user.avatarUrl ? (
+        <img src={user.avatarUrl} alt="" width={40} height={40} style={{ borderRadius: 999 }} referrerPolicy="no-referrer" />
+      ) : (
+        <span className="grid shrink-0 place-items-center" style={{ width: 40, height: 40, borderRadius: 999, background: 'rgba(232,201,155,0.14)', color: 'var(--gold)' }}>
+          {(user.name || 'You').slice(0, 1).toUpperCase()}
+        </span>
+      )}
+      <span className="flex-1 overflow-hidden">
+        <span style={{ display: 'block', color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{user.name || 'Signed in'}</span>
+        {user.email && (
+          <span className="eyebrow" style={{ display: 'block', marginTop: 2, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {user.email}
+          </span>
+        )}
+      </span>
+      <button onClick={() => signOut()} style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}>
+        Sign out
+      </button>
     </div>
   );
 }

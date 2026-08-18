@@ -5,6 +5,9 @@ import Reveal from '../ui/Reveal';
 import { app } from '../store/app';
 import { prefsStore, usePrefs } from '../store/prefs';
 import { markFirstRunDone } from '../lib/storage';
+import { signInWithGoogle } from '../lib/auth';
+import { isSupabaseConfigured } from '../lib/supabase';
+import GoogleButton from '../ui/GoogleButton';
 
 /**
  * First run (§6). Once, then skipped. Splash → welcome cards → into the session.
@@ -47,6 +50,15 @@ function Welcome() {
     prefsStore.setName(name.trim());
     markFirstRunDone();
     app.setView('hub');
+  };
+
+  // Sign up now: remember the local name + mark first-run done before the OAuth
+  // redirect, so we return straight to the hub. The account's onboarding (confirm
+  // name) then happens once in Profile.
+  const google = async () => {
+    prefsStore.setName(name.trim());
+    markFirstRunDone();
+    await signInWithGoogle();
   };
 
   return (
@@ -110,8 +122,13 @@ function Welcome() {
           ) : (
             <>
               <Button onClick={complete}>Continue</Button>
+              {isSupabaseConfigured && (
+                <div className="w-full max-w-[280px]">
+                  <GoogleButton onClick={google} />
+                </div>
+              )}
               <Button variant="ghost" onClick={complete}>
-                Sign in later
+                {isSupabaseConfigured ? 'Maybe later' : 'Sign in later'}
               </Button>
             </>
           )}

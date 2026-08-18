@@ -1,20 +1,19 @@
-import { loadPrefs } from './storage';
+import { getAuthUser, signInWithGoogle, signOut } from './auth';
 
 /**
- * Auth seam (§0, §8). Returns a local guest now; Google login drops in behind the
- * same shape later (the existing Supabase lib/auth stays as the wiring for that).
- * Screens depend on this shape only — never on a signed-in account.
+ * Auth seam (§0, §8). Now backed by real Google sign-in (see lib/auth.ts). Returns
+ * a local guest until the user signs in; the shape is unchanged so any older caller
+ * still works. New code should prefer useAuth()/signInWithGoogle() directly.
  */
 export type User = { id: string; name: string; isGuest: boolean };
 
 export function getUser(): User {
-  return { id: 'local-guest', name: loadPrefs().name, isGuest: true };
+  const u = getAuthUser();
+  return { id: u.id, name: u.name, isGuest: u.isGuest };
 }
 
-export async function signIn(): Promise<User> {
-  return getUser(); // Google later
+export function signIn(): Promise<void> {
+  return signInWithGoogle();
 }
 
-export async function signOut(): Promise<void> {
-  /* no-op for local guest */
-}
+export { signOut };
