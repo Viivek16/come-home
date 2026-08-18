@@ -20,6 +20,9 @@ import { dailyLine } from '../../data/dailyLines';
 const today = () =>
   new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
+/** Only the first name greets on Home — "Viivek", not "Viivek Mehata". */
+const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? '';
+
 /** §6 Home (§Phase C). A calm launchpad: quick actions, a rich arrival check-in
  *  entry, editorial serif, atmospheric band-tinted cards, one warm daily line.
  *  No streaks, no counts, one clear primary action. */
@@ -66,7 +69,7 @@ export default function HomeTab() {
         <Reveal delay={0.05}>
           <div className="eyebrow">{today()}</div>
           <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 4, lineHeight: 1.08 }}>
-            {BAND_GREETING[band].hi}{prefs.name ? `, ${prefs.name}` : ''}
+            {BAND_GREETING[band].hi}{firstName(prefs.name) ? `, ${firstName(prefs.name)}` : ''}
           </h1>
           <p style={{ color: 'var(--ink-muted)', marginTop: 4, fontSize: 'var(--t-sm)' }}>
             {BAND_GREETING[band].sub}

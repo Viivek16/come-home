@@ -5,10 +5,9 @@ import ReflectionTrail from '../../journey/ReflectionTrail';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { openJournal } from '../../journal/Journal';
 import { usePrefs, prefsStore } from '../../store/prefs';
-import { useAuth, signInWithGoogle, signOut, completeOnboarding } from '../../lib/auth';
+import { useAuth, signInWithGoogle, signOut } from '../../lib/auth';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import GoogleButton from '../../ui/GoogleButton';
-import Button from '../../ui/Button';
 import { reminders } from '../../lib/reminders';
 import {
   getHistory,
@@ -266,8 +265,6 @@ export default function ProfileTab() {
  */
 function AccountSection() {
   const { user, loading } = useAuth();
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
 
   if (!isSupabaseConfigured || loading) return null;
 
@@ -283,38 +280,7 @@ function AccountSection() {
     );
   }
 
-  // Signed in but not onboarded → a gentle one-step welcome that saves to the backend.
-  if (!user.onboarded) {
-    const value = name || user.name;
-    const finish = async () => {
-      setBusy(true);
-      await completeOnboarding(value);
-      setBusy(false);
-    };
-    return (
-      <div className="glass glass-strong mt-6" style={{ borderRadius: 'var(--radius-card)', padding: 22 }}>
-        <p className="serif" style={{ fontSize: 'var(--t-lg)' }}>
-          Welcome{user.name ? `, ${user.name.split(' ')[0]}` : ''}.
-        </p>
-        <label htmlFor="acct-name" style={{ display: 'block', color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 10 }}>
-          What should we call you?
-        </label>
-        <input
-          id="acct-name"
-          type="text"
-          value={value}
-          onChange={(e) => setName(e.target.value)}
-          className="glass mt-2 w-full px-4 py-3"
-          style={{ borderRadius: 'var(--radius-chip)', color: 'var(--ink)', fontSize: 'var(--t-md)' }}
-        />
-        <Button className="mt-4 w-full" onClick={finish} disabled={busy}>
-          {busy ? 'Saving…' : 'This is me'}
-        </Button>
-      </div>
-    );
-  }
-
-  // Signed in and onboarded → account card + sign out.
+  // Signed in → account card + sign out. (Name is collected on the login screen.)
   return (
     <div className="glass mt-6 flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
       {user.avatarUrl ? (

@@ -3,6 +3,8 @@ import { Capacitor } from '@capacitor/core';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { prefsStore } from '../store/prefs';
+import { app } from '../store/app';
+import { markFirstRunDone } from './storage';
 
 /**
  * Auth + profile layer. Come Home stays local-first: signing in with Google is
@@ -98,16 +100,27 @@ function start() {
   supabase.auth.getSession().then(async ({ data }) => {
     session = data.session;
     if (session) await loadProfile(session.user.id);
+    routeInIfSignedIn();
     recompute(false);
   });
   supabase.auth.onAuthStateChange(async (_event, s) => {
     session = s;
     profile = s ? profile : null;
     if (s) await loadProfile(s.user.id);
+    routeInIfSignedIn();
     recompute(false);
   });
 }
 start();
+
+// A signed-in user must never be stranded on the login screen (e.g. after the
+// Google redirect returns, or if a persisted session outlived the first-run flag).
+function routeInIfSignedIn() {
+  if (session && app.view === 'first-run') {
+    markFirstRunDone();
+    app.setView('hub');
+  }
+}
 
 // ---- actions ----
 
@@ -129,20 +142,32 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-/** Finish onboarding: save the chosen name and flip the flag, server-side. */
-export async function completeOnboarding(displayName: string): Promise<void> {
-  const s = session;
-  if (!s) return;
-  const name = displayName.trim() || null;
-  const { data } = await supabase
-    .from('profiles')
-    .update({ display_name: name, onboarded: true })
-    .eq('user_id', s.user.id)
-    .select('*')
-    .maybeSingle();
-  if (data) profile = data as Profile;
-  else profile = { ...(profile as Profile), display_name: name, onboarded: true };
-  recompute(false);
+/**
+ * Manual sign-up (email + password). The name is stored in user metadata so the
+ * handle_new_user trigger writes it into profiles.display_name. Returns
+ * needsConfirmation=true when the project has email confirmation on (no session
+ * yet) — the caller then asks the user to confirm before logging in.
+ */
+export async function signUpWithEmail(input: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}): Promise<{ needsConfirmation: boolean }> {
+  const fullName = [input.firstName, input.lastName].map((s) => s.trim()).filter(Boolean).join(' ');
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email.trim(),
+    password: input.password,
+    options: { data: { full_name: fullName, first_name: input.firstName.trim(), last_name: input.lastName.trim() } },
+  });
+  if (error) throw error;
+  return { needsConfirmation: !data.session };
+}
+
+/** Manual log-in (email + password). onAuthStateChange handles the session. */
+export async function signInWithEmail(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) throw error;
 }
 
 // ---- reactive read ----
