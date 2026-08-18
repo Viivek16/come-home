@@ -4,17 +4,14 @@ import { FEELINGS } from '../data/feelings';
 import Button from './Button';
 
 /**
- * Connected 5-state arrival slider (§Phase C). A calm track with five felt-states
- * and a sliding thumb — inspired by a mood slider, but the states, order and copy
- * are the app's existing trauma-sensitive arrival options (no new/clinical/negative
- * wording). Situational options (treatment / something specific) stay as separate
- * gentle entries in Arrival, so no state or crisis path is lost.
+ * Connected arrival slider (§Phase C). A calm track with the six felt-states and a
+ * sliding thumb — inspired by a mood slider, over the app's shared feeling set.
  *
  * Reuses the accessible `.seek` range (keyboard + focus for free). Nothing is
  * committed until the user actively moves the thumb, so there's never a presumed
  * default feeling — then one clear primary action confirms (§5).
  */
-const STATE_IDS: Emotion[] = ['afraid', 'overwhelmed', 'sad', 'exhausted', 'cant-sleep'];
+const STATE_IDS: Emotion[] = ['stress', 'afraid', 'depressed', 'angry', 'sleep-deprived', 'overwhelmed'];
 const labelOf = (id: Emotion) => FEELINGS.find((f) => f.id === id)?.label ?? '';
 
 export default function CheckInSlider({ onChoose }: { onChoose: (id: Emotion) => void }) {

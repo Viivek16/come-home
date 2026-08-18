@@ -1,15 +1,14 @@
-import type { Emotion } from '../store/session';
-
-/** Hub Support grid (§6 hub). Hard-moment categories mapping to Arrival feelings.
- *  Placeholder set, data-driven — tapping one starts a session in that emotion. */
-export type SupportCategory = { id: string; label: string; emotion: Emotion };
-
-export const SUPPORT_CATEGORIES: SupportCategory[] = [
-  { id: 'panic', label: 'Panic & anxiety', emotion: 'overwhelmed' },
-  { id: 'grief', label: 'Grief', emotion: 'sad' },
-  { id: 'sleep', label: "Can't sleep", emotion: 'cant-sleep' },
-  { id: 'treatment', label: 'In treatment', emotion: 'treatment' },
-  { id: 'anger', label: 'Anger', emotion: 'overwhelmed' },
-  { id: 'numb', label: 'Feeling numb', emotion: 'sad' },
-  { id: 'specific', label: 'Something specific', emotion: 'specific' },
+/** Support tab content (§6 hub) — the two option blocks from the in-app user flow.
+ *  Lists only for now: tapping is inert ("soon") until real content exists. The
+ *  "how are you feeling" list is the shared six (data/feelings); the disease list
+ *  lives here, verbatim from the flow. */
+export const SUPPORT_DISEASES: string[] = [
+  'Cancer',
+  'Dialysis',
+  'Hyper acidity / Digestion issues',
+  'Lungs / Breathing issues',
+  'Skin treatment',
+  'Sexual problems',
+  'Knee / Joint problems',
+  'Psychological issues',
 ];

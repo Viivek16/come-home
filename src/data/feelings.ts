@@ -4,13 +4,12 @@ import type { Emotion } from '../store/session';
 export type Feeling = { id: Emotion; label: string };
 
 export const FEELINGS: Feeling[] = [
-  { id: 'afraid', label: "I'm afraid" },
-  { id: 'overwhelmed', label: "I'm overwhelmed" },
-  { id: 'sad', label: "I'm sad" },
-  { id: 'exhausted', label: "I'm exhausted" },
-  { id: 'cant-sleep', label: "I can't sleep" },
-  { id: 'treatment', label: "I'm receiving treatment" },
-  { id: 'specific', label: 'I need support for something specific' },
+  { id: 'stress', label: 'Stress' },
+  { id: 'afraid', label: 'Afraid' },
+  { id: 'depressed', label: 'Depressed' },
+  { id: 'angry', label: 'Angry' },
+  { id: 'sleep-deprived', label: 'Sleep deprived' },
+  { id: 'overwhelmed', label: 'Overwhelmed' },
 ];
 
 export const feelingLabel = (id: Emotion | null) =>

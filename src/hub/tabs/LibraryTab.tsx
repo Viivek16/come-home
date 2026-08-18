@@ -9,7 +9,8 @@ import { app } from '../../store/app';
 import { openTool } from '../../store/tool';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { useFavorites } from '../../store/favorites';
-import { LIBRARY_ITEMS, libraryFeelings, inTimeBucket, TIME_BUCKETS, type TimeBucket } from '../../data/library';
+import { LIBRARY_ITEMS, inTimeBucket, TIME_BUCKETS, type TimeBucket } from '../../data/library';
+import { FEELINGS } from '../../data/feelings';
 import { PATHS } from '../../data/paths';
 import { loadLibFilter, saveLibFilter, type LibraryFilter } from '../../lib/storage';
 import { stillWaterGradient } from '../../store/water';
@@ -36,7 +37,7 @@ export default function LibraryTab() {
   const anyFilter = filter.time !== 'all' || filter.feeling !== 'all';
   const clear = () => update({ time: 'all', feeling: 'all' });
 
-  const feelings = libraryFeelings(); // categories = the felt-states present in the data
+  const feelings = FEELINGS.map((f) => f.label); // the shared six felt-states (matches the flow)
   const filtered = LIBRARY_ITEMS.filter(
     (l) => inTimeBucket(l, filter.time as TimeBucket) && (filter.feeling === 'all' || l.feeling === filter.feeling),
   );
@@ -95,7 +96,7 @@ export default function LibraryTab() {
         {/* Browse by felt-state — category chips with atmospheric cover thumbnails. */}
         <Reveal delay={0.22}>
           <div className="flex items-center justify-between" style={{ marginTop: 26, marginBottom: 10 }}>
-            <span className="eyebrow">Browse by feeling</span>
+            <span className="eyebrow">How are you feeling today?</span>
             {anyFilter && (
               <button onClick={clear} className="eyebrow" style={{ color: 'var(--gold)' }} aria-label="Clear filters">
                 Clear

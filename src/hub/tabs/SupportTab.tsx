@@ -1,27 +1,11 @@
-import { Wind, CloudRain, Moon, Activity, Flame, CircleDashed, Compass, type LucideIcon } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
-import { session, type Emotion } from '../../store/session';
-import { app } from '../../store/app';
-import { SUPPORT_CATEGORIES } from '../../data/supportCategories';
+import { SUPPORT_DISEASES } from '../../data/supportCategories';
+import { FEELINGS } from '../../data/feelings';
 
-const ICONS: Record<string, LucideIcon> = {
-  panic: Wind,
-  grief: CloudRain,
-  sleep: Moon,
-  treatment: Activity,
-  anger: Flame,
-  numb: CircleDashed,
-  specific: Compass,
-};
-
-/** §6 Support. Hard-moment categories → start a session in that emotion. */
+/** §6 Support (in-app user flow). Two option blocks: a disease list and the six
+ *  felt-states. Lists only for now — rows are inert ("soon") until real guided
+ *  content exists, so nothing routes to a broken/empty session. */
 export default function SupportTab() {
-  const open = (emotion: Emotion) => {
-    session.reset();
-    session.pickEmotion(emotion);
-    app.setView('session');
-  };
-
   return (
     <div className="screen">
       <div className="mx-auto w-full max-w-md py-10">
@@ -31,23 +15,36 @@ export default function SupportTab() {
             What's here right now?
           </h1>
         </Reveal>
-        <div className="grid grid-cols-2 gap-3">
-          {SUPPORT_CATEGORIES.map((c, i) => {
-            const Icon = ICONS[c.id] ?? Compass;
-            return (
-              <Reveal key={c.id} delay={0.14 + i * 0.05}>
-                <button
-                  onClick={() => open(c.emotion)}
-                  className="glass flex min-h-[104px] w-full flex-col justify-between px-4 py-4 text-left transition-transform duration-300 active:scale-[0.98]"
-                  style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
-                >
-                  <Icon size={22} strokeWidth={1.4} color="var(--gold)" />
-                  <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{c.label}</span>
-                </button>
-              </Reveal>
-            );
-          })}
+
+        <SupportBlock delay={0.12} title="Are you dealing with some disease?" items={SUPPORT_DISEASES} />
+        <SupportBlock delay={0.22} title="How are you feeling today?" items={FEELINGS.map((f) => f.label)} />
+      </div>
+    </div>
+  );
+}
+
+/** A titled list of inert option rows — the diagram's lists, honestly marked "soon". */
+function SupportBlock({ title, items, delay }: { title: string; items: string[]; delay: number }) {
+  return (
+    <div style={{ marginTop: 26 }}>
+      <Reveal delay={delay}>
+        <div className="eyebrow" style={{ marginBottom: 10 }}>
+          {title}
         </div>
+      </Reveal>
+      <div className="glass" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
+        {items.map((label, i) => (
+          <div
+            key={label}
+            className="flex items-center justify-between px-5 py-4"
+            style={{ borderBottom: i === items.length - 1 ? 'none' : '1px solid var(--hairline)', minHeight: 56 }}
+          >
+            <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{label}</span>
+            <span className="eyebrow shrink-0" style={{ color: 'var(--gold)' }}>
+              Soon
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

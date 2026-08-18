@@ -86,10 +86,10 @@ export default function ReflectionTrail({
         </div>
       </div>
 
-      {/* 1 — Mood picture */}
+      {/* 1 — Mood picture (Analytics, per the user flow) */}
       <Reveal>
         <div className="glass px-5 py-5" style={{ borderRadius: 'var(--radius-card)' }}>
-          <div className="eyebrow">How you arrived</div>
+          <div className="eyebrow">Analytics · how you arrived</div>
           {moods.length === 0 ? (
             <p className="serif-italic" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 12, lineHeight: 1.5 }}>
               No moments gathered this month yet. Whenever you come home, a soft picture will form here.
@@ -132,10 +132,10 @@ export default function ReflectionTrail({
         </div>
       </Reveal>
 
-      {/* 2 — Practice calendar */}
+      {/* 2 — Practice calendar (Weekly Spine, per the user flow) */}
       <Reveal>
         <div className="glass px-5 py-5" style={{ borderRadius: 'var(--radius-card)' }}>
-          <div className="eyebrow">The days you came home</div>
+          <div className="eyebrow">Weekly spine · the days you came home</div>
           <div className="mt-4 grid grid-cols-7 gap-y-3" aria-hidden>
             {DOW.map((d, i) => (
               <span key={`h${i}`} className="eyebrow" style={{ fontSize: 9, textAlign: 'center' }}>

@@ -63,7 +63,7 @@ export default function SleepTab() {
                       <span className="flex-1">
                         <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', display: 'block' }}>{s.title}</span>
                         <span className="eyebrow" style={{ display: 'block', marginTop: 4 }}>
-                          {s.kind} · {s.length}
+                          {s.kind}{s.length ? ` · ${s.length}` : ''}
                         </span>
                       </span>
                       {!s.src && (

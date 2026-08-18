@@ -10,7 +10,7 @@ import { openTool } from '../../store/tool';
 import { programme, useProgrammeProgress } from '../../store/programme';
 import { PROGRAMMES } from '../../data/programmes';
 import { PATHS } from '../../data/paths';
-import { getHistory, type HistoryEntry } from '../../lib/storage';
+import { getHistory, getReflections, getJournal, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import { BAND_GREETING, useTimeBand } from '../../lib/timeBand';
 import { stillWaterGradient } from '../../store/water';
@@ -19,6 +19,9 @@ import { dailyLine } from '../../data/dailyLines';
 
 const today = () =>
   new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+
+const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /** Only the first name greets on Home — "Viivek", not "Viivek Mehata". */
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? '';
@@ -30,6 +33,7 @@ export default function HomeTab() {
   const prefs = usePrefs();
   const band = useTimeBand(); // single time source (§Phase B/C) — greeting, cards, cover tint
   const [recent, setRecent] = useState<HistoryEntry | null>(null);
+  const [activeDays, setActiveDays] = useState<Set<string>>(new Set());
   useProgrammeProgress();
   const prog = PROGRAMMES[0];
   const progStarted = programme.isStarted(prog.id);
@@ -38,6 +42,13 @@ export default function HomeTab() {
 
   useEffect(() => {
     getHistory().then((h) => setRecent(h[0] ?? null));
+    // Weekly Spine activity — days a moment was gathered. ponytail: timers/breathe
+    // aren't persisted yet, so this reflects sessions, reflections and journal.
+    Promise.all([getHistory(), getReflections(), getJournal()]).then(([h, r, j]) => {
+      const set = new Set<string>();
+      for (const x of [...h, ...r, ...j]) set.add(dayKey(new Date(x.ts)));
+      setActiveDays(set);
+    });
   }, []);
 
   // Meditate → the full arrival → duration → player flow.
@@ -123,6 +134,11 @@ export default function HomeTab() {
           />
         </Reveal>
 
+        {/* Weekly Spine (§6 flow) — the days you came home this week. */}
+        <Reveal delay={0.5} className="mt-4">
+          <WeekSpine active={activeDays} />
+        </Reveal>
+
         {/* One warm line for today (§Phase C) — rotates by the day, never a task. */}
         <Reveal delay={0.54} className="mt-7">
           <p className="serif-italic" style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 'var(--t-md)' }}>
@@ -138,6 +154,56 @@ export default function HomeTab() {
           <PracticeCard Icon={Timer} title="Quiet timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
         </Reveal>
       </div>
+    </div>
+  );
+}
+
+/** Weekly Spine (§6 flow) — a compact current-week strip; gold dots mark the days
+ *  a moment was gathered. A mirror, never a streak. The fuller month view lives in
+ *  Profile (journey/ReflectionTrail). */
+function WeekSpine({ active }: { active: Set<string> }) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay()); // back to Sunday
+  const todayKey = dayKey(now);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+  return (
+    <div className="glass px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
+      <div className="eyebrow">Weekly spine</div>
+      <div className="mt-3 grid grid-cols-7 gap-y-2" aria-hidden>
+        {DOW.map((d, i) => (
+          <span key={`h${i}`} className="eyebrow" style={{ fontSize: 9, textAlign: 'center' }}>
+            {d}
+          </span>
+        ))}
+        {days.map((d) => {
+          const on = active.has(dayKey(d));
+          const isToday = dayKey(d) === todayKey;
+          return (
+            <span key={dayKey(d)} className="grid place-items-center" style={{ height: 24 }}>
+              <span
+                style={{
+                  width: on ? 11 : 5,
+                  height: on ? 11 : 5,
+                  borderRadius: 999,
+                  background: on ? 'var(--gold)' : 'rgba(157,178,181,0.22)',
+                  boxShadow: on ? '0 0 12px rgba(232,201,155,0.5)' : 'none',
+                  outline: isToday ? '1px solid rgba(232,201,155,0.45)' : 'none',
+                  outlineOffset: 3,
+                  transition: 'all .3s var(--ease-calm)',
+                }}
+              />
+            </span>
+          );
+        })}
+      </div>
+      <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-xs)', marginTop: 10, lineHeight: 1.5 }}>
+        The days you came home this week.
+      </p>
     </div>
   );
 }

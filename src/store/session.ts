@@ -5,14 +5,15 @@ import { useSyncExternalStore } from 'react';
  * — never scattered across useState. Carries the arriving emotion → path → private
  * check-ins through one sitting.
  */
+// The six felt-states from the in-app user flow. This is the single emotion
+// vocabulary across Arrival, Support, Library and stored history.
 export type Emotion =
+  | 'stress'
   | 'afraid'
-  | 'overwhelmed'
-  | 'sad'
-  | 'exhausted'
-  | 'cant-sleep'
-  | 'treatment'
-  | 'specific';
+  | 'depressed'
+  | 'angry'
+  | 'sleep-deprived'
+  | 'overwhelmed';
 export type PathId = 'grounding-2' | 'stay-5' | 'more-15';
 export type Checkin = 'calmer' | 'better' | 'same' | 'struggling' | 'prefer-not';
 export type Step = 'opening' | 'arrival' | 'response' | 'support' | 'music' | 'checkin' | 'return';
@@ -45,11 +46,13 @@ export const session = {
 
 /**
  * Soft, opt-in crisis-support reveal (§6.6): "Still struggling" twice in a
- * session, OR arriving in treatment / can't sleep. Never alarmist, never forced.
+ * session, OR arriving in a heavier state. Never alarmist, never forced.
+ * ponytail: heavier arrivals = depressed/overwhelmed, mapped from the old
+ * treatment/can't-sleep triggers when the emotion set was replaced.
  */
 export function shouldOfferSupport(s: SessionState): boolean {
   const struggling = s.checkins.filter((c) => c === 'struggling').length;
-  return struggling >= 2 || s.emotion === 'treatment' || s.emotion === 'cant-sleep';
+  return struggling >= 2 || s.emotion === 'depressed' || s.emotion === 'overwhelmed';
 }
 
 export function useSessionState(): SessionState {

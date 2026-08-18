@@ -28,12 +28,20 @@ const local = (): Storage | null => {
  * pressure — just a soft invitation the user can turn off in one tap.
  */
 export type Reminder = { enabled: boolean; time: string };
+/** Onboarding answers (§6 onboarding flow). Collected once, then kept for gentle
+ *  personalisation later. All optional — a skipped question stays at its default. */
+export type Onboarding = {
+  triedBefore: boolean | null; // "Have you tried meditating before?"
+  frequency: string; // "How regularly do you meditate?" — '' | daily | weekly | rarely | never
+  struggling: string[]; // "Are you struggling with something?" — feeling ids
+};
 export type Prefs = {
   name: string;
   reduceMotion: boolean;
   voice: string;
   ambientMuted: boolean;
   reminder: Reminder;
+  onboarding: Onboarding;
 };
 // ambientMuted defaults true → "Background music" is OFF by default (§FIX2). It
 // stays inert until a distinct ambient asset is configured (see audio/ambient.ts).
@@ -44,6 +52,7 @@ export const DEFAULT_PREFS: Prefs = {
   voice: 'default',
   ambientMuted: true,
   reminder: { enabled: false, time: '21:00' },
+  onboarding: { triedBefore: null, frequency: '', struggling: [] },
 };
 
 export function loadPrefs(): Prefs {
@@ -155,6 +164,16 @@ export function firstRunDone(): boolean {
 }
 export function markFirstRunDone(): void {
   local()?.setItem(FIRSTRUN_KEY, '1');
+}
+
+// The 3 onboarding questions run once after sign-up/login, before Home. Separate
+// from firstRunDone so the login screen and the questionnaire are independent.
+const ONBOARDING_KEY = 'come-home:onboardingDone';
+export function onboardingDone(): boolean {
+  return local()?.getItem(ONBOARDING_KEY) === '1';
+}
+export function markOnboardingDone(): void {
+  local()?.setItem(ONBOARDING_KEY, '1');
 }
 
 export type HistoryEntry = { ts: number; emotion: Emotion | null; checkins: Checkin[] };

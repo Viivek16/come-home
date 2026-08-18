@@ -15,11 +15,23 @@ export type SleepItem = {
   src: string | null; // real asset URL later; null → coming soon
 };
 
+// Titles are the in-app user flow's Sleep lists, verbatim. length is 'Loops' for
+// soundscapes and blank elsewhere until real assets carry a real duration.
 export const SLEEP_ITEMS: SleepItem[] = [
   { id: 's-rain', title: 'Rain on still water', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-tide', title: 'Night by the shore', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-release', title: 'Releasing the day', kind: 'Wind-down', length: '10 min', type: 'wind-down', src: null },
-  { id: 's-drift', title: 'Drifting off', kind: 'Sleep', length: '20 min', type: 'meditation', src: null },
+  { id: 's-shore', title: 'Night by the shore', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 's-bonfire', title: 'Cozy bonfire', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 's-galaxy', title: 'Stargazing galaxy', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 's-windy', title: 'Windy night', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 'w-classical', title: 'Classical music', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
+  { id: 'w-basuri', title: 'Playful basuri', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
+  { id: 'w-piano', title: 'Classical piano', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
+  { id: 'w-bowls', title: 'Singing bowls', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
+  { id: 'w-om', title: 'Chanting Om', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
+  { id: 'm-binaural', title: 'Binaural beats', kind: 'Sleep', length: '', type: 'meditation', src: null },
+  { id: 'm-delta', title: 'Delta waves', kind: 'Sleep', length: '', type: 'meditation', src: null },
+  { id: 'm-solfeggio', title: 'Solfeggio frequencies', kind: 'Sleep', length: '', type: 'meditation', src: null },
+  { id: 'm-astral', title: 'Astral music', kind: 'Sleep', length: '', type: 'meditation', src: null },
 ];
 
 export const SLEEP_TYPES: { type: SleepType; heading: string; blurb: string }[] = [

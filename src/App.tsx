@@ -4,6 +4,7 @@ import Scene from './scene/Scene';
 import Atmosphere from './water/Atmosphere';
 import SessionFlow from './session/SessionFlow';
 import FirstRun from './first-run/FirstRun';
+import Onboarding from './first-run/Onboarding';
 import Hub from './hub/Hub';
 import ToolHost from './tools/ToolHost';
 import ProgrammeOverview from './programme/ProgrammeOverview';
@@ -11,7 +12,8 @@ import SleepPlayer from './sleep/SleepPlayer';
 import Sanctuary from './sanctuary/Sanctuary';
 import Journal from './journal/Journal';
 import PlayerHost from './audio/PlayerHost';
-import { useView } from './store/app';
+import { app, useView } from './store/app';
+import { onboardingDone } from './lib/storage';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
@@ -54,10 +56,16 @@ export default function App() {
     };
   }, []);
 
-  // Hub / first-run sit at their own water depth (§4); the session flow manages its own.
+  // New users answer the 3 onboarding questions once, after login, before Home —
+  // every path lands on 'hub' first, so gate it here in one place (§6 flow).
+  useEffect(() => {
+    if (view === 'hub' && !onboardingDone()) app.setView('onboarding');
+  }, [view]);
+
+  // Hub / first-run / onboarding sit at their own water depth (§4); the session flow manages its own.
   useEffect(() => {
     if (view === 'hub') setDepth('hub');
-    else if (view === 'first-run') setDepth('opening');
+    else if (view === 'first-run' || view === 'onboarding') setDepth('opening');
   }, [view]);
 
   return (
@@ -68,6 +76,8 @@ export default function App() {
       <div className="app-layer">
         {view === 'first-run' ? (
           <FirstRun />
+        ) : view === 'onboarding' ? (
+          <Onboarding />
         ) : view === 'session' ? (
           <SessionFlow />
         ) : view === 'tool' ? (
