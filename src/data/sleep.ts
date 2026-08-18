@@ -16,9 +16,10 @@ export type SleepItem = {
 };
 
 export const SLEEP_ITEMS: SleepItem[] = [
-  { id: 's1', title: 'Placeholder wind-down', kind: 'Wind-down', length: '10 min', type: 'wind-down', src: null },
-  { id: 's2', title: 'Placeholder night soundscape', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's3', title: 'Placeholder sleep meditation', kind: 'Sleep', length: '20 min', type: 'meditation', src: null },
+  { id: 's-rain', title: 'Rain on still water', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 's-tide', title: 'Night by the shore', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
+  { id: 's-release', title: 'Releasing the day', kind: 'Wind-down', length: '10 min', type: 'wind-down', src: null },
+  { id: 's-drift', title: 'Drifting off', kind: 'Sleep', length: '20 min', type: 'meditation', src: null },
 ];
 
 export const SLEEP_TYPES: { type: SleepType; heading: string; blurb: string }[] = [

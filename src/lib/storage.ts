@@ -22,10 +22,29 @@ const local = (): Storage | null => {
   }
 };
 
-export type Prefs = { name: string; reduceMotion: boolean; voice: string; ambientMuted: boolean };
+/**
+ * A gentle, opt-in daily reminder (§Phase G). Off by default; when on, a single
+ * supportive local notification at `time` (HH:mm). Never a streak nudge, never
+ * pressure — just a soft invitation the user can turn off in one tap.
+ */
+export type Reminder = { enabled: boolean; time: string };
+export type Prefs = {
+  name: string;
+  reduceMotion: boolean;
+  voice: string;
+  ambientMuted: boolean;
+  reminder: Reminder;
+};
 // ambientMuted defaults true → "Background music" is OFF by default (§FIX2). It
 // stays inert until a distinct ambient asset is configured (see audio/ambient.ts).
-export const DEFAULT_PREFS: Prefs = { name: '', reduceMotion: false, voice: 'default', ambientMuted: true };
+// reminder defaults OFF — the user opts in (§Phase G).
+export const DEFAULT_PREFS: Prefs = {
+  name: '',
+  reduceMotion: false,
+  voice: 'default',
+  ambientMuted: true,
+  reminder: { enabled: false, time: '21:00' },
+};
 
 export function loadPrefs(): Prefs {
   try {

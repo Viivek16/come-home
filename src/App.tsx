@@ -16,6 +16,7 @@ import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
 import { ambient } from './audio/ambient';
+import { reminders } from './lib/reminders';
 import { useAppHistory } from './nav/history';
 
 /**
@@ -24,7 +25,7 @@ import { useAppHistory } from './nav/history';
  */
 export default function App() {
   const view = useView();
-  const { reduceMotion, ambientMuted } = usePrefs();
+  const { reduceMotion, ambientMuted, reminder } = usePrefs();
 
   // Keep hardware/browser Back inside the app (only Home-screen Back exits).
   useAppHistory();
@@ -38,6 +39,11 @@ export default function App() {
   useEffect(() => {
     ambient.setMuted(ambientMuted);
   }, [ambientMuted]);
+
+  // Gentle reminder: re-arm (or clear) the opt-in local notification from prefs.
+  useEffect(() => {
+    reminders.sync(reminder.enabled, reminder.time);
+  }, [reminder.enabled, reminder.time]);
   useEffect(() => {
     const go = () => ambient.enable();
     window.addEventListener('pointerdown', go, { once: true });

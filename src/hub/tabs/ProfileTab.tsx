@@ -5,6 +5,7 @@ import ReflectionTrail from '../../journey/ReflectionTrail';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { openJournal } from '../../journal/Journal';
 import { usePrefs, prefsStore } from '../../store/prefs';
+import { reminders } from '../../lib/reminders';
 import {
   getHistory,
   clearHistory,
@@ -37,7 +38,24 @@ export default function ProfileTab() {
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [reminderDenied, setReminderDenied] = useState(false);
   useProgrammeProgress();
+
+  // Opt-in reminder — ask for permission only when turning it on (a user gesture).
+  const toggleReminder = async () => {
+    if (!prefs.reminder.enabled) {
+      const ok = await reminders.requestPermission();
+      if (!ok) {
+        setReminderDenied(true);
+        return;
+      }
+      setReminderDenied(false);
+      prefsStore.setReminder({ enabled: true, time: prefs.reminder.time });
+    } else {
+      prefsStore.setReminder({ enabled: false, time: prefs.reminder.time });
+    }
+  };
+  const setReminderTime = (time: string) => prefsStore.setReminder({ enabled: prefs.reminder.enabled, time });
 
   useEffect(() => {
     getHistory().then(setHistory);
@@ -163,6 +181,41 @@ export default function ProfileTab() {
             </div>
           </>
         )}
+
+        {/* A gentle, opt-in reminder — supportive, never a streak to keep (§Phase G). */}
+        <div className="eyebrow" style={{ marginTop: 34 }}>
+          A moment for you
+        </div>
+        <div className="glass mt-3" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
+          <Row label="A gentle daily reminder" last={!prefs.reminder.enabled}>
+            <Switch on={prefs.reminder.enabled} label="Daily reminder" onToggle={toggleReminder} />
+          </Row>
+          {prefs.reminder.enabled && (
+            <Row label="Around" last>
+              <input
+                type="time"
+                aria-label="Reminder time"
+                value={prefs.reminder.time}
+                onChange={(e) => setReminderTime(e.target.value)}
+                style={{
+                  background: 'transparent',
+                  color: 'var(--ink)',
+                  border: '1px solid var(--hairline)',
+                  borderRadius: 10,
+                  padding: '6px 10px',
+                  fontSize: 'var(--t-sm)',
+                  colorScheme: 'dark',
+                  minHeight: 36,
+                }}
+              />
+            </Row>
+          )}
+        </div>
+        <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-xs)', marginTop: 10, lineHeight: 1.5 }}>
+          {reminderDenied
+            ? 'Notifications are off in your device settings — no pressure. It’s here whenever you’d like it.'
+            : 'A soft nudge to pause, never a streak to keep. Turn it off any time.'}
+        </p>
 
         {/* Settings */}
         <div className="eyebrow" style={{ marginTop: 34 }}>

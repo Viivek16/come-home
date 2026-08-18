@@ -1,21 +1,22 @@
-import { useEffect, type ComponentType } from 'react';
-import { Moon, Waves, Wind } from 'lucide-react';
+import { useEffect } from 'react';
 import Reveal from '../../ui/Reveal';
+import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
 import { setMood } from '../../store/scene';
 import { openSleep } from '../../store/sleep';
 import { SLEEP_TYPES, sleepItemsOfType, type SleepType } from '../../data/sleep';
 
-const TYPE_ICON: Record<SleepType, ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
-  soundscape: Waves,
-  'wind-down': Wind,
-  meditation: Moon,
+const TYPE_ICON: Record<SleepType, GradientIconName> = {
+  soundscape: 'waves',
+  'wind-down': 'wind',
+  meditation: 'moon',
 };
 
-/** §6 Sleep & Rest (§Phase6) — data-driven, grouped by type, pinned to the night
- *  scene. Cards are always visible; without a real asset they read "coming soon". */
+/** §6 Sleep & Rest (§Phase6/§Phase G) — data-driven, grouped by type, pinned to the
+ *  night scene, with soft-gradient category icons. Cards are always visible; without
+ *  a real asset they read "coming soon" (never a broken player). */
 export default function SleepTab() {
   useEffect(() => {
-    setMood('night');
+    setMood('night'); // tie the whole surface to the Night band (§Phase G)
     return () => setMood(null);
   }, []);
 
@@ -23,20 +24,29 @@ export default function SleepTab() {
     <div className="screen">
       <div className="mx-auto w-full max-w-md py-10">
         <Reveal delay={0.05}>
-          <div className="eyebrow">Sleep &amp; rest</div>
-          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 6 }}>
-            Let the night be soft.
-          </h1>
+          <div className="flex items-center gap-3">
+            <span className="glass grid place-items-center" style={{ width: 42, height: 42, borderRadius: 14 }}>
+              <GradientIcon name="moon" size={22} />
+            </span>
+            <div>
+              <div className="eyebrow">Sleep &amp; rest</div>
+              <h1 className="serif" style={{ fontSize: 'var(--t-xl)', marginTop: 2, lineHeight: 1.1 }}>
+                Let the night be soft.
+              </h1>
+            </div>
+          </div>
         </Reveal>
 
         {SLEEP_TYPES.map((group, gi) => {
           const items = sleepItemsOfType(group.type);
           if (!items.length) return null;
-          const Icon = TYPE_ICON[group.type];
           return (
-            <div key={group.type} style={{ marginTop: gi === 0 ? 20 : 30 }}>
+            <div key={group.type} style={{ marginTop: gi === 0 ? 24 : 30 }}>
               <Reveal delay={0.12 + gi * 0.06}>
-                <div className="eyebrow">{group.heading}</div>
+                <div className="flex items-center gap-2">
+                  <GradientIcon name={TYPE_ICON[group.type]} size={16} />
+                  <div className="eyebrow">{group.heading}</div>
+                </div>
                 <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)', marginTop: 4 }}>{group.blurb}</p>
               </Reveal>
               <div className="mt-3 flex flex-col gap-3">
@@ -48,7 +58,7 @@ export default function SleepTab() {
                       style={{ borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
                     >
                       <span className="glass grid shrink-0 place-items-center" style={{ width: 44, height: 44, borderRadius: 14 }}>
-                        <Icon size={20} strokeWidth={1.4} color="var(--gold)" />
+                        <GradientIcon name={TYPE_ICON[group.type]} size={20} />
                       </span>
                       <span className="flex-1">
                         <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)', display: 'block' }}>{s.title}</span>

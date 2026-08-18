@@ -82,9 +82,20 @@ export default function TabBar({
                 className="tabbar-btn"
                 style={{ color: on ? 'var(--gold)' : 'var(--ink-muted)', transitionTimingFunction: 'var(--ease-calm)' }}
               >
-                <span className="tabbar-pip" aria-hidden />
-                <Icon size={21} strokeWidth={on ? 1.9 : 1.5} />
-                <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
+                {/* Champagne-gold active pill that glides between tabs (§Phase G).
+                    Shared layoutId → one element moves; reduce-motion snaps it. */}
+                {on && (
+                  <motion.span
+                    layoutId="tabActivePill"
+                    className="tabbar-active-pill"
+                    aria-hidden
+                    transition={reduce ? { duration: 0 } : { type: 'spring', bounce: 0, duration: 0.5 }}
+                  />
+                )}
+                <span className="tabbar-btn-inner">
+                  <Icon size={21} strokeWidth={on ? 1.9 : 1.5} />
+                  <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
+                </span>
               </button>
             );
           })}
