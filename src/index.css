@@ -129,25 +129,19 @@ body {
   pointer-events: none;
   background: linear-gradient(180deg, transparent 0%, rgba(7, 19, 26, 0.5) 42%, rgba(6, 15, 21, 0.82) 74%, rgba(5, 13, 18, 0.94) 100%);
 }
-/* Readability wash — a soft even veil so glass buttons/text always read clearly
-   over the scene without hiding it. */
-.legibility {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: rgba(6, 17, 24, 0.28);
-}
 
-/* ---- Scene animations ---- */
-/* Global illustrated backdrop shell. Ambient (Home + most views) = full viewport;
-   player = a 60vh top band that melts into the controls via a mask (§Phase4 §9). */
+/* ---- Illustrated backdrops + procedural motion (§Phase5) ---- */
+/* Global backdrop shell. Ambient (Home + most views) = full viewport; player =
+   a 60vh top band that melts into the controls via a mask (§8). */
 .time-scene {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.7;
+}
+.scene-layer {
+  position: absolute;
+  inset: 0;
 }
 .time-scene--player {
   bottom: auto;
@@ -155,17 +149,31 @@ body {
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 65%, transparent 100%);
 }
-/* L6 foreground reeds — anchored to the shoreline, swayed by the breath clock
-   (scaleY inline, origin bottom). The tiny scale change is the only motion. */
-.scene-reeds {
+/* L0 — the immediate skyTop solid (never an empty rectangle, §9) carrying the
+   image. Masked at the base so the living water behind the scene shows through
+   the lower band = L4 shimmer (no second WebGL context). The player uses its own
+   outer mask, so the reveal mask stands down there. */
+.backdrop-media {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 55%;
-  height: 12%;
-  transform-origin: bottom;
-  will-change: transform;
-  pointer-events: none;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+}
+.time-scene--player .backdrop-media {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  transition: opacity 0.4s var(--ease-calm); /* §9 fade in on decode */
+}
+.time-scene--player .backdrop-img {
+  object-position: center 40%; /* pull the horizon down behind the controls (§5) */
 }
 @keyframes scene-in {
   from {
@@ -175,93 +183,89 @@ body {
     opacity: 1;
   }
 }
-.scene-star {
+/* L1 — cloud drift. One doubled-width soft-noise tile (pure CSS gradients, no
+   asset) creeping across the upper 40% over 240s; a -50% translate on the doubled
+   tile wraps seamlessly. Barely perceptible by design (§6). */
+.backdrop-clouds {
   position: absolute;
-  border-radius: 50%;
-  background: #eaf2f2;
-  box-shadow: 0 0 4px rgba(234, 242, 242, 0.8);
-  animation: twinkle 4.5s ease-in-out infinite;
-}
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.95;
-  }
-}
-.scene-cloud {
-  position: absolute;
+  top: 0;
   left: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  filter: blur(14px);
-  animation: cloud-drift linear infinite;
+  width: 200%;
+  height: 40%;
+  opacity: 0.06;
+  background-image:
+    radial-gradient(60% 80% at 12% 40%, rgba(255, 255, 255, 0.9), transparent 60%),
+    radial-gradient(50% 70% at 34% 55%, rgba(255, 255, 255, 0.7), transparent 62%),
+    radial-gradient(70% 90% at 60% 35%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(45% 65% at 82% 50%, rgba(255, 255, 255, 0.65), transparent 60%);
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  filter: blur(6px);
+  will-change: transform;
+  animation: cloud-drift 240s linear infinite;
 }
 @keyframes cloud-drift {
   from {
-    transform: translateX(-24vw);
+    transform: translateX(0);
   }
   to {
-    transform: translateX(124vw);
+    transform: translateX(-50%);
   }
 }
-/* Birds drift across the sky; the inner wing element flaps independently. */
-.scene-bird {
+/* L2 — star twinkle (dawn + night). Opacity only, never position; each dot gets a
+   desynced 3–7s cycle so they never pulse in unison (§6). */
+.backdrop-stars {
   position: absolute;
-  left: 0;
-  animation: bird-fly linear infinite;
-  will-change: transform;
+  inset: 0;
 }
-.scene-bird-wing {
-  display: block;
-  transform-origin: 50% 50%;
-  animation: bird-flap 0.5s ease-in-out infinite;
+.backdrop-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #eaf2f2;
+  box-shadow: 0 0 4px rgba(234, 242, 242, 0.7);
+  animation: star-twinkle ease-in-out infinite;
+  will-change: opacity;
 }
-@keyframes bird-fly {
-  from {
-    transform: translate(-12vw, 0);
-  }
-  to {
-    transform: translate(114vw, -5vh);
-  }
-}
-@keyframes bird-flap {
+@keyframes star-twinkle {
   0%,
   100% {
-    transform: scaleY(1);
+    opacity: 0.3;
   }
   50% {
-    transform: scaleY(0.4);
+    opacity: 0.9;
   }
 }
-/* Leaves fall from the sky toward the water, swaying and turning as they go. */
-.scene-leaf {
+/* L3 — breath-synced light bloom (opacity + scale set inline from the breath
+   clock, so it matches the meditation ring exactly). */
+.backdrop-bloom {
   position: absolute;
-  top: -4%;
-  width: 7px;
-  height: 9px;
-  border-radius: 0 60% 0 60%;
-  background: rgba(232, 201, 155, 0.5);
-  animation: leaf-fall linear infinite;
-  will-change: transform, opacity;
+  inset: 0;
+  pointer-events: none;
+  will-change: opacity, transform;
 }
-@keyframes leaf-fall {
-  0% {
-    transform: translate(0, -4vh) rotate(0deg);
-    opacity: 0;
-  }
-  12% {
-    opacity: 0.75;
-  }
-  50% {
-    transform: translate(4vw, 26vh) rotate(180deg);
-  }
-  100% {
-    transform: translate(-2vw, 58vh) rotate(360deg);
-    opacity: 0;
-  }
+/* L5 — legibility scrim (§7). The guaranteed contrast floor; per-bucket opacity
+   set inline. Above the image, below the global grain/vignette (<Atmosphere/>). */
+.backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* §7 shape, mid-band raised from the spec's draft (0.18→0.42): the illustrated
+     day sky is far brighter than the old SVG scene, and near-white --ink needs a
+     real floor there. Verified ≥4.5:1 on all four backdrops (day worst-case at
+     40% checked explicitly). Darker buckets dial this back via their scrim token. */
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 15, 20, 0.6) 0%,
+    rgba(6, 15, 20, 0.44) 22%,
+    rgba(6, 15, 20, 0.42) 45%,
+    rgba(6, 15, 20, 0.52) 70%,
+    rgba(6, 15, 20, 0.82) 100%
+  );
+}
+/* §6 lifecycle — freeze procedural motion while hidden/backgrounded. */
+.time-scene.is-hidden .backdrop-clouds,
+.time-scene.is-hidden .backdrop-star {
+  animation-play-state: paused;
 }
 
 /* ---- Staged reveal (Emil-Kowalski ethos: enter-only, ease-out, staggered) ---- */
@@ -550,22 +554,29 @@ body {
   padding: 8px 0 7px;
   min-height: 52px;
   border-radius: 20px;
-  transition: color 0.35s var(--ease-calm), background-color 0.35s var(--ease-calm);
+  transition: color 0.35s var(--ease-calm);
 }
-.tabbar-pip {
+/* Content rides above the gliding pill. */
+.tabbar-btn-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+/* The champagne-gold active pill (§Phase G) — soft glass-gold that slides between
+   tabs. framer-motion drives the position via a shared layoutId. */
+.tabbar-active-pill {
   position: absolute;
-  top: 6px;
-  width: 40px;
-  height: 26px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(232, 201, 155, 0.24), transparent 70%);
-  opacity: 0;
-  transform: scale(0.7);
-  transition: opacity 0.35s var(--ease-calm), transform 0.35s var(--ease-calm);
-}
-.tabbar-btn[aria-current='page'] .tabbar-pip {
-  opacity: 1;
-  transform: scale(1);
+  inset: 3px 5px;
+  z-index: 0;
+  border-radius: 16px;
+  background: linear-gradient(157deg, rgba(232, 201, 155, 0.24), rgba(232, 201, 155, 0.09));
+  border: 1px solid rgba(232, 201, 155, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 16px rgba(232, 201, 155, 0.16);
 }
 .tabbar-btn:active {
   transform: scale(0.96);
@@ -628,96 +639,3 @@ body {
   margin-top: 8px;
 }
 
-/* ============================================================
-   SCENE — elevated time-of-day backdrop (§7)
-   Sun rays, layered clouds, distant hills, fireflies, shooting star.
-   ============================================================ */
-/* Slow-rotating sun rays — a soft radial fan behind the sun body. */
-.scene-rays {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  animation: rays-turn 120s linear infinite;
-  will-change: transform;
-}
-@keyframes rays-turn {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-/* A single shooting star crossing the night sky, on a long loop. */
-.scene-shoot {
-  position: absolute;
-  width: 90px;
-  height: 1.5px;
-  background: linear-gradient(90deg, rgba(234, 242, 242, 0), rgba(234, 242, 242, 0.9));
-  border-radius: 999px;
-  opacity: 0;
-  animation: shoot 14s ease-in infinite;
-  will-change: transform, opacity;
-}
-@keyframes shoot {
-  0%,
-  82% {
-    transform: translate(0, 0) rotate(18deg);
-    opacity: 0;
-  }
-  84% {
-    opacity: 0.9;
-  }
-  92% {
-    transform: translate(220px, 72px) rotate(18deg);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-/* Fireflies / drifting motes for dusk + night — tiny gold points bobbing. */
-.scene-firefly {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(232, 201, 155, 0.9);
-  box-shadow: 0 0 6px rgba(232, 201, 155, 0.8);
-  animation: firefly 9s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-@keyframes firefly {
-  0%,
-  100% {
-    transform: translate(0, 0);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.9;
-  }
-  50% {
-    transform: translate(10px, -16px);
-    opacity: 0.5;
-  }
-  80% {
-    opacity: 0.8;
-  }
-}
-/* Reflection shimmer where the sky body meets the water line. */
-.scene-reflection {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(9px);
-  animation: reflection-sway 7s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-@keyframes reflection-sway {
-  from {
-    transform: translate(-50%, 0) scaleX(1);
-    opacity: 0.5;
-  }
-  to {
-    transform: translate(-50%, 0) scaleX(1.12);
-    opacity: 0.75;
-  }
-}

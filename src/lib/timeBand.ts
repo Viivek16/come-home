@@ -98,7 +98,7 @@ export function __setBandForTest(b: TimeBand | null) {
   notify();
 }
 
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   // Dev-only QA override (§Phase4 §10): ?tod=dawn|day|dusk|night|auto, persisted to
   // localStorage under ch_tod_override so it survives reloads. The four QA buckets
   // map to a representative band, which drives the illustrated mood AND the water

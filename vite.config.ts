@@ -27,8 +27,14 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        // §12 — explicit so a returning user gets the new build, never a stale
+        // cached bundle (autoUpdate sets these implicitly; pinning them here keeps
+        // the guarantee even if injectRegister ever changes).
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallback: '/index.html', // app shell serves every route offline (§9)
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // avif added so all four backdrops precache → offline + no stale backdrop (§4).
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,avif}'],
         runtimeCaching: [
           {
             // Google Fonts stylesheet
