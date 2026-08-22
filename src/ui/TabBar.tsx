@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, type ComponentType } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '../lib/motion';
+
+const PILL_W = 40; // keep in sync with .tabbar-active-pill width
 
 export type TabItem = { id: string; label: string; Icon: ComponentType<{ size?: number; strokeWidth?: number }> };
 
@@ -56,10 +58,27 @@ export default function TabBar({
   const visible = useAutoHide();
   const reduce = useReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   // Slide distance = the pill's own height + its bottom offset, so it tucks fully
   // off-screen. Measured, with a safe fallback before first layout.
   const hidden = (wrapRef.current?.offsetHeight ?? 96) + 12;
+
+  // Centre the active bubble on the active tab from the active button's measured
+  // geometry, so it glides via the CSS `left` transition (no framer layout projection).
+  // Re-measure on tab change and on resize. `null` until first measure so it never
+  // slides in from 0.
+  const activeIndex = items.findIndex((i) => i.id === active);
+  const [pillLeft, setPillLeft] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const btn = navRef.current?.querySelectorAll('button')[activeIndex] as HTMLElement | undefined;
+      if (btn) setPillLeft(btn.offsetLeft + btn.offsetWidth / 2 - PILL_W / 2);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeIndex]);
 
   return createPortal(
     <>
@@ -71,7 +90,9 @@ export default function TabBar({
         animate={reduce ? { opacity: visible ? 1 : 0 } : { y: visible ? 0 : hidden, opacity: visible ? 1 : 0 }}
         transition={reduce ? { duration: 0.2 } : { type: 'spring', bounce: 0, duration: 0.4 }}
       >
-        <nav className="tabbar" aria-label="Sections">
+        <nav className="tabbar" aria-label="Sections" ref={navRef}>
+          {/* Champagne-gold active bubble, one element gliding between tabs (§Phase B). */}
+          {pillLeft !== null && <span className="tabbar-active-pill" aria-hidden style={{ left: pillLeft }} />}
           {items.map(({ id, label, Icon }) => {
             const on = id === active;
             return (
@@ -82,16 +103,6 @@ export default function TabBar({
                 className="tabbar-btn"
                 style={{ color: on ? 'var(--gold)' : 'var(--ink-muted)', transitionTimingFunction: 'var(--ease-calm)' }}
               >
-                {/* Champagne-gold active pill that glides between tabs (§Phase G).
-                    Shared layoutId → one element moves; reduce-motion snaps it. */}
-                {on && (
-                  <motion.span
-                    layoutId="tabActivePill"
-                    className="tabbar-active-pill"
-                    aria-hidden
-                    transition={reduce ? { duration: 0 } : { type: 'spring', bounce: 0, duration: 0.5 }}
-                  />
-                )}
                 <span className="tabbar-btn-inner">
                   <Icon size={21} strokeWidth={on ? 1.9 : 1.5} />
                   <span style={{ fontSize: 10, letterSpacing: '0.08em' }}>{label}</span>
