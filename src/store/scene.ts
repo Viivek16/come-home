@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from 'react';
-import { useDepth, type DepthGroup } from './water';
 import { useTimeBand, bandMood } from '../lib/timeBand';
 
 /**
@@ -25,23 +24,13 @@ function useOverride(): Mood | null {
   );
 }
 
-// The guided session keeps its own dawn→dusk emotional arc; only the hub tracks
-// the wall clock (that's where "Good morning" lives).
-const FROM_DEPTH: Record<DepthGroup, Mood> = {
-  opening: 'dawn',
-  response: 'dusk',
-  checkin: 'dusk',
-  hub: 'day', // overridden by the clock in useMood
-};
-
-/** Resolved mood (override wins → hub follows the time band → else the depth arc).
- *  The band comes from the shared clock (lib/timeBand), so the illustrated sky and
- *  the water/greeting never disagree (§Phase B). */
+/** Resolved mood (override wins → else the real time of day). Every screen now
+ *  follows the wall clock, so a midday session shows the day sky, not a fixed
+ *  dawn→dusk arc (§Phase A). Sleep still pins 'night' via the override. The band
+ *  comes from the shared clock (lib/timeBand), so sky, water and greeting agree. */
 export function useMood(): Mood {
-  const depth = useDepth();
   const o = useOverride();
   const clock = bandMood(useTimeBand());
   if (o) return o;
-  if (depth === 'hub') return clock;
-  return FROM_DEPTH[depth];
+  return clock;
 }

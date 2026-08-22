@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { audio } from '../lib/audio';
 import { ambient } from './ambient';
+import { markPresence } from '../lib/storage';
 
 /**
  * Session audio (§7). Local-only, no progress writes. Reuses the single
@@ -19,6 +20,7 @@ export const SESSION_AUDIO: SessionAudio = { musicTrack: TRACK };
 type Snap = { playing: boolean; position: number; duration: number; ready: boolean; error: boolean; hasSource: boolean };
 let snap: Snap = { playing: false, position: 0, duration: 0, ready: false, error: false, hasSource: true };
 let loadedSrc: string | null = null;
+let markedPresence = false; // §Phase A — fire markPresence once per session (storage dedups per day)
 
 // Stall guard: if a load never reports metadata OR error (e.g. a hung request on
 // a bad deploy), flip to the calm unavailable state rather than freeze at 0:00.
@@ -100,6 +102,7 @@ export const audioControls = {
   async play() {
     try {
       await audio.play();
+      markedPresence || ((markedPresence = true), void markPresence()); // a real sitting counts (§Phase A)
     } catch {
       /* gesture/policy rejection — stays paused */
     }

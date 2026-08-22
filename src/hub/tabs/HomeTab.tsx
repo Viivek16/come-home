@@ -10,7 +10,7 @@ import { openTool } from '../../store/tool';
 import { programme, useProgrammeProgress } from '../../store/programme';
 import { PROGRAMMES } from '../../data/programmes';
 import { PATHS } from '../../data/paths';
-import { getHistory, getReflections, getJournal, type HistoryEntry } from '../../lib/storage';
+import { getHistory, getReflections, getJournal, getPresence, type HistoryEntry } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import { BAND_GREETING, useTimeBand } from '../../lib/timeBand';
 import { stillWaterGradient } from '../../store/water';
@@ -42,11 +42,12 @@ export default function HomeTab() {
 
   useEffect(() => {
     getHistory().then((h) => setRecent(h[0] ?? null));
-    // Weekly Spine activity — days a moment was gathered. ponytail: timers/breathe
-    // aren't persisted yet, so this reflects sessions, reflections and journal.
-    Promise.all([getHistory(), getReflections(), getJournal()]).then(([h, r, j]) => {
+    // Weekly Spine activity — days you came home: presence (app open / first play)
+    // unioned with the days a moment was gathered (sessions, reflections, journal).
+    Promise.all([getHistory(), getReflections(), getJournal(), getPresence()]).then(([h, r, j, p]) => {
       const set = new Set<string>();
       for (const x of [...h, ...r, ...j]) set.add(dayKey(new Date(x.ts)));
+      for (const k of p) set.add(k);
       setActiveDays(set);
     });
   }, []);

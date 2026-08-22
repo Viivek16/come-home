@@ -15,6 +15,7 @@ import {
   getReflections,
   clearReflections,
   getJournal,
+  getPresence,
   type HistoryEntry,
   type Reflection,
   type JournalEntry,
@@ -40,6 +41,7 @@ export default function ProfileTab() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [presence, setPresence] = useState<string[]>([]);
   const [confirmClear, setConfirmClear] = useState(false);
   const [reminderDenied, setReminderDenied] = useState(false);
   useProgrammeProgress();
@@ -64,6 +66,7 @@ export default function ProfileTab() {
     getHistory().then(setHistory);
     getReflections().then(setReflections);
     getJournal().then(setJournal);
+    getPresence().then(setPresence);
   }, []);
 
   const doClear = async () => {
@@ -124,7 +127,7 @@ export default function ProfileTab() {
 
         {/* A soft mood picture + practice calendar, from what's already on-device. */}
         <div className="mt-8">
-          <ReflectionTrail history={history} reflections={reflections} journal={journal} />
+          <ReflectionTrail history={history} reflections={reflections} journal={journal} presence={presence} />
         </div>
 
         {/* Private journaling — prompts + a blank page, kept just here. */}

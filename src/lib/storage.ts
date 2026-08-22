@@ -203,6 +203,32 @@ export async function clearHistory(): Promise<void> {
 }
 
 /**
+ * Presence (§Phase A) — the days you came home, independent of whether a session
+ * was finished. Written on app open and on the first play of any sitting, so just
+ * showing up counts. A plain day-key list, deduped; never a count or a streak. The
+ * key format matches HomeTab/ReflectionTrail's dayKey so the dots union cleanly.
+ */
+const PRESENCE_KEY = 'come-home:presence';
+const presenceKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+export async function markPresence(): Promise<void> {
+  try {
+    const key = presenceKey(new Date());
+    const list = (await get<string[]>(PRESENCE_KEY)) ?? [];
+    if (list.includes(key)) return; // one entry per day
+    await set(PRESENCE_KEY, [key, ...list].slice(0, 400)); // ponytail: cap ~13 months
+  } catch {
+    /* ignore */
+  }
+}
+export async function getPresence(): Promise<string[]> {
+  try {
+    return (await get<string[]>(PRESENCE_KEY)) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Reflection trail (§Phase5) — optional one-word moments gathered after a sitting.
  * A gentle qualitative record, never a streak or a count. On-device (IndexedDB).
  */

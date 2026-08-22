@@ -13,7 +13,7 @@ import Sanctuary from './sanctuary/Sanctuary';
 import Journal from './journal/Journal';
 import PlayerHost from './audio/PlayerHost';
 import { app, useView } from './store/app';
-import { onboardingDone } from './lib/storage';
+import { onboardingDone, markPresence } from './lib/storage';
 import { setDepth } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
@@ -31,6 +31,11 @@ export default function App() {
 
   // Keep hardware/browser Back inside the app (only Home-screen Back exits).
   useAppHistory();
+
+  // Just opening the app counts as coming home (§Phase A) — dedup'd per day in storage.
+  useEffect(() => {
+    void markPresence();
+  }, []);
 
   // Apply the persisted reduce-motion override across the app (§10).
   useEffect(() => {

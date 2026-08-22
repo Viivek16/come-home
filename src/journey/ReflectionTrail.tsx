@@ -30,10 +30,12 @@ export default function ReflectionTrail({
   history,
   reflections,
   journal,
+  presence,
 }: {
   history: HistoryEntry[];
   reflections: Reflection[];
   journal: JournalEntry[];
+  presence: string[];
 }) {
   // 0 = current month; negative = earlier. Never navigate into the future.
   const [offset, setOffset] = useState(0);
@@ -57,6 +59,7 @@ export default function ReflectionTrail({
   for (const h of history) active.add(dateKey(new Date(h.ts)));
   for (const r of reflections) active.add(dateKey(new Date(r.ts)));
   for (const j of journal) active.add(dateKey(new Date(j.ts)));
+  for (const k of presence) active.add(k); // days you came home (§Phase A)
 
   const firstWeekday = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
