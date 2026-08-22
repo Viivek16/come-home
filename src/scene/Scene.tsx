@@ -27,9 +27,12 @@ function Bloom({ bloom }: { bloom: Palette['bloom'] }) {
     <div
       className="backdrop-bloom"
       style={{
-        background: `radial-gradient(circle at ${bloom.x}% ${bloom.y}%, ${bloom.color}, transparent ${bloom.size}%)`,
-        opacity: 0.92 + b * 0.08,
-        transform: `scale(${1 + b * 0.02})`,
+        // Two-stop glow (§Phase D): a wide soft halo plus a tighter brighter core,
+        // so night/dusk read with real depth instead of a flat wash.
+        background: `radial-gradient(circle at ${bloom.x}% ${bloom.y}%, ${bloom.color}, transparent ${bloom.size}%), radial-gradient(circle at ${bloom.x}% ${bloom.y}%, ${bloom.color}, transparent ${Math.round(bloom.size * 0.45)}%)`,
+        // A touch more breath life; useBreath holds a constant 0.5 under reduced motion.
+        opacity: 0.86 + b * 0.14,
+        transform: `scale(${1 + b * 0.03})`,
       }}
     />
   );

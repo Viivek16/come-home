@@ -29,9 +29,11 @@ export const MOODS: Record<Mood, Palette> = {
   // Day — the brightest image, upper-centre glow, no stars → the heaviest scrim.
   day: { src: dayUrl, skyTop: '#164a5c', stars: 0, bloom: { x: 50, y: 20, color: 'rgba(252,239,207,0.34)', size: 54 }, scrim: 1.0 },
   // Dusk — a large low sun settling, warm glow; a darker image, so a lighter scrim.
-  dusk: { src: duskUrl, skyTop: '#0a2029', stars: 0, bloom: { x: 30, y: 56, color: 'rgba(238,201,155,0.55)', size: 60 }, scrim: 0.82 },
+  // Bloom enriched (§Phase D): larger, warmer, stronger, for a more cinematic sun.
+  dusk: { src: duskUrl, skyTop: '#0a2029', stars: 0, bloom: { x: 28, y: 58, color: 'rgba(240,196,146,0.62)', size: 70 }, scrim: 0.82 },
   // Night — cool moon glow, a deep star field; already dark → the lightest scrim.
-  night: { src: nightUrl, skyTop: '#050c15', stars: 28, bloom: { x: 76, y: 28, color: 'rgba(234,242,242,0.42)', size: 42 }, scrim: 0.72 },
+  // Bloom enriched (§Phase D): larger, cooler, stronger, so the moon reads richer.
+  night: { src: nightUrl, skyTop: '#050c15', stars: 28, bloom: { x: 76, y: 26, color: 'rgba(214,230,240,0.5)', size: 54 }, scrim: 0.72 },
 };
 
 /**

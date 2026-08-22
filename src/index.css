@@ -138,6 +138,11 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Keep the fixed scene one stable composited layer so scrolling content above it
+     never triggers a repaint/flicker of the backdrop (§Phase D). */
+  transform: translateZ(0);
+  isolation: isolate;
+  will-change: transform;
 }
 .scene-layer {
   position: absolute;
@@ -252,15 +257,21 @@ body {
   /* §7 shape, mid-band raised again (0.42→0.55 at centre, §Phase B): the bright
      day sky still bled through and body --ink sat under AA. Verified ≥4.5:1 on the
      day backdrop (worst case) at the centre column. Darker buckets dial this back
-     via their per-bucket scrim token, so night stays soft. */
-  background: linear-gradient(
-    to bottom,
-    rgba(6, 15, 20, 0.62) 0%,
-    rgba(6, 15, 20, 0.56) 22%,
-    rgba(6, 15, 20, 0.55) 45%,
-    rgba(6, 15, 20, 0.62) 70%,
-    rgba(6, 15, 20, 0.85) 100%
-  );
+     via their per-bucket scrim token, so night stays soft.
+     A faint fractal-noise layer rides on top of the gradient to dither out OLED
+     banding on the dark night/dusk gradients (§Phase D). Barely perceptible. */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23d)' opacity='0.06'/%3E%3C/svg%3E"),
+    linear-gradient(
+      to bottom,
+      rgba(6, 15, 20, 0.62) 0%,
+      rgba(6, 15, 20, 0.56) 22%,
+      rgba(6, 15, 20, 0.55) 45%,
+      rgba(6, 15, 20, 0.62) 70%,
+      rgba(6, 15, 20, 0.85) 100%
+    );
+  background-repeat: repeat, no-repeat;
+  background-size: 140px 140px, 100% 100%;
 }
 /* §6 lifecycle — freeze procedural motion while hidden/backgrounded. */
 .time-scene.is-hidden .backdrop-clouds,
@@ -457,14 +468,17 @@ body {
 }
 
 /* Screen padding wrapper (§3) with safe-area.
-   min-height is the VIEWPORT (100dvh), not 100% — a percentage min-height needs an
+   min-height is the VIEWPORT (100svh), not 100%. A percentage min-height needs an
    unbroken chain of definite-height ancestors, which the fixed-water shell doesn't
    provide, so `flex-1 + justify-center` was centering inside content height (≈top of
-   screen). dvh tracks the real mobile viewport so every centered screen — onboarding,
-   breathe, session, sleep — sits at the true center. */
+   screen). svh is the stable small-viewport height, so every centered screen
+   (onboarding, breathe, session, sleep) sits at the true center without resizing on
+   the URL-bar show/hide (§Phase D). */
 .screen {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100vh; /* fallback */
+  /* svh (small viewport) is stable across the mobile URL-bar show/hide, so scrolling
+     no longer resizes the screen and repaints the fixed scene behind it (§Phase D). */
+  min-height: 100svh;
   padding: calc(var(--safe-top) + 14px) var(--pad-screen) calc(var(--safe-bottom) + 28px);
   display: flex;
   flex-direction: column;
