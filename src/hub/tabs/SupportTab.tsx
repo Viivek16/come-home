@@ -1,10 +1,11 @@
 import Reveal from '../../ui/Reveal';
+import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
 import { SUPPORT_DISEASES } from '../../data/supportCategories';
 import { FEELINGS } from '../../data/feelings';
+import type { Emotion } from '../../store/session';
 
-/** §6 Support (in-app user flow). Two option blocks: a disease list and the six
- *  felt-states. Lists only for now — rows are inert ("soon") until real guided
- *  content exists, so nothing routes to a broken/empty session. */
+/** §6 Support (in-app user flow). Two option blocks as calm tile grids: a disease
+ *  list and the six felt-states, each feeling carrying a soft-gradient line icon. */
 export default function SupportTab() {
   return (
     <div className="screen">
@@ -16,36 +17,57 @@ export default function SupportTab() {
           </h1>
         </Reveal>
 
-        <SupportBlock delay={0.12} title="Are you dealing with some disease?" items={SUPPORT_DISEASES} />
-        <SupportBlock delay={0.22} title="How are you feeling today?" items={FEELINGS.map((f) => f.label)} />
+        <TileGrid
+          delay={0.12}
+          title="Are you dealing with some disease?"
+          tiles={SUPPORT_DISEASES.map((label) => ({ key: label, label }))}
+        />
+        <TileGrid
+          delay={0.22}
+          title="How are you feeling today?"
+          tiles={FEELINGS.map((f) => ({ key: f.id, label: f.label, icon: FEELING_ICON[f.id] }))}
+        />
       </div>
     </div>
   );
 }
 
-/** A titled list of inert option rows — the diagram's lists, honestly marked "soon". */
-function SupportBlock({ title, items, delay }: { title: string; items: string[]; delay: number }) {
+/** Feeling → soft-gradient glyph (§Phase C). Calm line icons only, gold, never red. */
+const FEELING_ICON: Record<Emotion, GradientIconName> = {
+  stress: 'spark',
+  afraid: 'cloud',
+  depressed: 'rain',
+  angry: 'flame',
+  'sleep-deprived': 'moon',
+  overwhelmed: 'waves',
+};
+
+type Tile = { key: string; label: string; icon?: GradientIconName };
+
+/** A titled 2-column grid of even-height glass tiles with gentle press feedback. */
+function TileGrid({ title, tiles, delay }: { title: string; tiles: Tile[]; delay: number }) {
   return (
     <div style={{ marginTop: 26 }}>
       <Reveal delay={delay}>
-        <div className="eyebrow" style={{ marginBottom: 10 }}>
+        <div className="eyebrow" style={{ marginBottom: 12 }}>
           {title}
         </div>
       </Reveal>
-      <div className="glass" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
-        {items.map((label, i) => (
-          <div
-            key={label}
-            className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: i === items.length - 1 ? 'none' : '1px solid var(--hairline)', minHeight: 56 }}
-          >
-            <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{label}</span>
-            <span className="eyebrow shrink-0" style={{ color: 'var(--gold)' }}>
-              Soon
-            </span>
-          </div>
-        ))}
-      </div>
+      <Reveal delay={delay + 0.04}>
+        <div className="grid grid-cols-2 gap-3">
+          {tiles.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              className="glass flex flex-col items-center justify-center gap-2 px-3 py-4 text-center transition-transform duration-300 active:scale-[0.98]"
+              style={{ minHeight: 88, borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+            >
+              {t.icon && <GradientIcon name={t.icon} size={24} />}
+              <span style={{ color: 'var(--ink)', fontSize: 'var(--t-sm)', lineHeight: 1.25 }}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </Reveal>
     </div>
   );
 }

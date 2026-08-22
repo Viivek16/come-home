@@ -92,23 +92,18 @@ export default function MusicContinues() {
 }
 
 /** Ambient bed toggle — wired-but-inert until a distinct ambient asset exists
- *  (§3 stubbed). Visible so the player's shape is final; disabled with a quiet
- *  "soon" so it never pretends to work. */
+ *  (§3 stubbed). Visible so the player's shape is final; disabled so it never
+ *  pretends to work. */
 function AmbientToggle() {
   return (
-    <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
-      <button
-        disabled
-        aria-label="Ambient sound (coming soon)"
-        aria-disabled
-        className="grid place-items-center"
-        style={{ width: 44, height: 44, borderRadius: 999, color: 'var(--ink-muted)', opacity: 0.4, cursor: 'default' }}
-      >
-        <AudioLines size={20} strokeWidth={1.6} />
-      </button>
-      <span className="eyebrow" aria-hidden style={{ position: 'absolute', top: '100%', marginTop: 2, fontSize: 9 }}>
-        soon
-      </span>
-    </div>
+    <button
+      disabled
+      aria-label="Ambient sound (unavailable)"
+      aria-disabled
+      className="grid place-items-center"
+      style={{ width: 44, height: 44, borderRadius: 999, color: 'var(--ink-muted)', opacity: 0.4, cursor: 'default' }}
+    >
+      <AudioLines size={20} strokeWidth={1.6} />
+    </button>
   );
 }

@@ -13,7 +13,7 @@ const SLEEP_TIMERS = [0, 15, 30, 45]; // minutes; 0 = off
 
 /**
  * Full-screen sleep player (§Phase6). Reuses the shared Transport, so a null-src
- * item shows the calm "coming soon" state and a real src plays with no code
+ * item shows the calm unavailable state and a real src plays with no code
  * change (soundscapes loop). Dark + minimal, with an optional fade-out timer.
  */
 export default function SleepPlayer() {
@@ -29,8 +29,8 @@ export default function SleepPlayer() {
     };
   }, []);
 
-  // Load this item's source (soundscapes loop). A null src → Transport shows
-  // "coming soon"; a real src later just plays. No code change needed.
+  // Load this item's source (soundscapes loop). A null src → Transport shows the
+  // calm unavailable state; a real src later just plays. No code change needed.
   // The sleep player takes over the single shared audio element, so end any
   // collapsed session player first (ponytail: single-audio design → one owner).
   useEffect(() => {

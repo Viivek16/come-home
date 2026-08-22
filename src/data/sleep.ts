@@ -2,7 +2,7 @@
  * Sleep & Rest content (§6 hub, §Phase6). Data-driven and content-ready: three
  * types — looping soundscapes, wind-downs, and sleep meditations. Each item's
  * audio `src` is null until real assets are supplied; the player then shows a
- * calm "coming soon" state. Add a real `src` (and nothing else) and it plays —
+ * calm unavailable state. Add a real `src` (and nothing else) and it plays —
  * soundscapes loop, the rest play through once.
  */
 export type SleepType = 'soundscape' | 'wind-down' | 'meditation';
@@ -12,7 +12,7 @@ export type SleepItem = {
   kind: string; // display label
   length: string;
   type: SleepType;
-  src: string | null; // real asset URL later; null → coming soon
+  src: string | null; // real asset URL later; null → calm unavailable state
 };
 
 // Titles are the in-app user flow's Sleep lists, verbatim. length is 'Loops' for

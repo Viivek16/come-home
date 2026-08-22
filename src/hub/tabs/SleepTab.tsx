@@ -13,7 +13,7 @@ const TYPE_ICON: Record<SleepType, GradientIconName> = {
 
 /** §6 Sleep & Rest (§Phase6/§Phase G) — data-driven, grouped by type, pinned to the
  *  night scene, with soft-gradient category icons. Cards are always visible; without
- *  a real asset they read "coming soon" (never a broken player). */
+ *  a real asset, opening one shows the calm unavailable state (never a broken player). */
 export default function SleepTab() {
   useEffect(() => {
     setMood('night'); // tie the whole surface to the Night band (§Phase G)
@@ -66,11 +66,6 @@ export default function SleepTab() {
                           {s.kind}{s.length ? ` · ${s.length}` : ''}
                         </span>
                       </span>
-                      {!s.src && (
-                        <span className="eyebrow shrink-0" style={{ color: 'var(--gold)' }}>
-                          Coming soon
-                        </span>
-                      )}
                     </button>
                   </Reveal>
                 ))}

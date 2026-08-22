@@ -8,7 +8,16 @@ import { useId, type ReactNode } from 'react';
  * Each instance mints a unique gradient id (useId) so multiple icons on one screen
  * never collide.
  */
-export type GradientIconName = 'moon' | 'sun' | 'waves' | 'star' | 'wind';
+export type GradientIconName =
+  | 'moon'
+  | 'sun'
+  | 'waves'
+  | 'star'
+  | 'wind'
+  | 'spark'
+  | 'cloud'
+  | 'rain'
+  | 'flame';
 
 const PATHS: Record<GradientIconName, ReactNode> = {
   moon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
@@ -23,6 +32,16 @@ const PATHS: Record<GradientIconName, ReactNode> = {
   ),
   star: <path d="M12 3l2.6 5.27 5.82.85-4.21 4.1.99 5.8L12 16.9l-5.2 2.73.99-5.8-4.21-4.1 5.82-.85L12 3z" />,
   wind: <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2" />,
+  // Feeling glyphs (§Phase C). Calm minimalist line icons, gold only, never alarmy.
+  spark: <path d="M12 3l1.3 7.7 7.7 1.3-7.7 1.3L12 21l-1.3-7.7L3 12l7.7-1.3z" />,
+  cloud: <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z" />,
+  rain: (
+    <>
+      <path d="M17.5 15.5H9a6 6 0 1 1 5.75-7.7h1.75a4 4 0 1 1 1 7.7z" />
+      <path d="M9 18.5l-1 2.5M13 18.5l-1 2.5M17 18.5l-1 2.5" />
+    </>
+  ),
+  flame: <path d="M12 3c2.4 3.4 4 5.4 4 8.2a4 4 0 0 1-8 0c0-1.2.5-2.3 1.4-3.2.3 1 .8 1.5 1.5 1.8C10.4 8.2 10.8 5.6 12 3z" />,
 };
 
 export default function GradientIcon({
