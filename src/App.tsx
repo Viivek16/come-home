@@ -32,7 +32,7 @@ export default function App() {
   // Keep hardware/browser Back inside the app (only Home-screen Back exits).
   useAppHistory();
 
-  // Just opening the app counts as coming home (§Phase A) — dedup'd per day in storage.
+  // Just opening the app counts as coming home (§Phase A). Dedup'd per day in storage.
   useEffect(() => {
     void markPresence();
   }, []);

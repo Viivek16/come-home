@@ -42,7 +42,7 @@ export default function HomeTab() {
 
   useEffect(() => {
     getHistory().then((h) => setRecent(h[0] ?? null));
-    // Weekly Spine activity — days you came home: presence (app open / first play)
+    // Weekly Spine activity, days you came home: presence (app open / first play)
     // unioned with the days a moment was gathered (sessions, reflections, journal).
     Promise.all([getHistory(), getReflections(), getJournal(), getPresence()]).then(([h, r, j, p]) => {
       const set = new Set<string>();

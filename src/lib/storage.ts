@@ -203,7 +203,7 @@ export async function clearHistory(): Promise<void> {
 }
 
 /**
- * Presence (§Phase A) — the days you came home, independent of whether a session
+ * Presence (§Phase A). The days you came home, independent of whether a session
  * was finished. Written on app open and on the first play of any sitting, so just
  * showing up counts. A plain day-key list, deduped; never a count or a streak. The
  * key format matches HomeTab/ReflectionTrail's dayKey so the dots union cleanly.
