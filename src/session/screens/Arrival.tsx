@@ -1,21 +1,28 @@
+import { useState } from 'react';
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
-import CheckInSlider from '../../ui/CheckInSlider';
+import GradientIcon from '../../ui/GradientIcon';
 import { session, type Emotion } from '../../store/session';
+import { FEELINGS } from '../../data/feelings';
 import { saveLastArrival } from '../../lib/storage';
 import { audioControls, SESSION_AUDIO } from '../../audio/audioStore';
 
-/** §6.2 Arrival — meet the person where they are. A connected slider over the six
- *  felt-states (§Phase C). Ghost exit is always present. */
+/** §6.2 Arrival — meet the person where they are. The six felt-states as the same
+ *  tiles the Support grid uses; tap one or several, then Begin (§task2). */
 export default function Arrival({ onExit }: { onExit: () => void }) {
-  // Begin (§task2): record the arrival if one was chosen, start the default track
-  // on this tap (a user gesture — required by mobile autoplay policy), then open
-  // the player. An untouched slider means no presumed feeling → null.
-  const choose = (id: Emotion | null) => {
-    if (id) saveLastArrival(id);
+  const [selected, setSelected] = useState<Emotion[]>([]);
+  const toggle = (id: Emotion) =>
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  // Begin: record the first chosen feeling (history's "last arrival" is one),
+  // start the default track on this tap (a user gesture — mobile autoplay), then
+  // open the player. No selection is fine — no presumed feeling.
+  const begin = () => {
+    const primary = selected[0] ?? null;
+    if (primary) saveLastArrival(primary);
     audioControls.ensureLoaded(SESSION_AUDIO.musicTrack);
     void audioControls.play();
-    session.beginMeditation(id);
+    session.beginMeditation(primary);
   };
 
   return (
@@ -30,11 +37,29 @@ export default function Arrival({ onExit }: { onExit: () => void }) {
           </p>
         </Reveal>
 
-        <Reveal delay={0.2} className="mt-9">
-          <CheckInSlider onChoose={choose} />
+        <Reveal delay={0.2} className="mt-8">
+          <div className="grid grid-cols-2 gap-3">
+            {FEELINGS.map((f) => {
+              const on = selected.includes(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => toggle(f.id)}
+                  aria-pressed={on}
+                  className={`glass ${on ? 'glass-gold' : ''} flex flex-col items-center justify-center gap-2 px-3 py-4 text-center transition-transform duration-300 active:scale-[0.98]`}
+                  style={{ minHeight: 88, borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+                >
+                  <GradientIcon name={f.icon} size={24} />
+                  <span style={{ color: 'var(--ink)', fontSize: 'var(--t-sm)', lineHeight: 1.25 }}>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </Reveal>
 
-        <Reveal delay={0.5} className="mt-9 flex justify-center">
+        <Reveal delay={0.5} className="mt-8 flex flex-col items-center gap-4">
+          <Button onClick={begin}>Begin</Button>
           <Button variant="ghost" onClick={onExit}>
             I'm okay, just exploring
           </Button>

@@ -108,19 +108,14 @@ export default function ProfileTab() {
           </h1>
         </Reveal>
 
-        {/* Gentle journeys — a resumable carousel; missing content shows a calm shell. */}
+        {/* Gentle journeys — a static 2×2 grid, all in view; missing content shows a calm shell. */}
         <Reveal delay={0.12}>
           <div className="eyebrow" style={{ marginBottom: 12 }}>
             Gentle journeys
           </div>
         </Reveal>
         <Reveal delay={0.16}>
-          <div
-            className="-mx-[22px] flex gap-3 overflow-x-auto px-[22px] pb-2"
-            // scroll-padding-left so snap-on-load keeps the first card inset by the
-            // screen padding instead of pulling it flush to the device edge.
-            style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: '22px' }}
-          >
+          <div className="grid grid-cols-2 gap-3">
             {PROGRAMMES.map((p) => (
               <ProgrammeCard key={p.id} p={p} />
             ))}
@@ -333,12 +328,10 @@ function ProgrammeCard({ p }: { p: Programme }) {
   return (
     <button
       onClick={() => programme.open(p.id)}
-      className={`glass ${started && !soon ? 'glass-gold' : ''} shrink-0 px-5 py-5 text-left transition-transform duration-300 active:scale-[0.98]`}
+      className={`glass ${started && !soon ? 'glass-gold' : ''} w-full px-4 py-4 text-left transition-transform duration-300 active:scale-[0.98]`}
       style={{
-        width: 250,
-        minHeight: 150,
+        minHeight: 132,
         borderRadius: 'var(--radius-card)',
-        scrollSnapAlign: 'start',
         transitionTimingFunction: 'var(--ease-calm)',
         opacity: soon ? 0.82 : 1,
       }}

@@ -8,6 +8,6 @@ export const SUPPORT_DISEASES: string[] = [
   'Breathing Problems',
   'Skin Treatment',
   'Sexual Problems',
-  'Knee / Joint Problems',
+  'Joint Problems',
   'Psychological Issues',
 ];

@@ -25,7 +25,7 @@ export default function CoverCard({
   sub?: string;
   onClick: () => void;
   accent?: boolean;
-  center?: boolean; // centre the tag/title/sub within the tile (§task3, Home cards)
+  center?: boolean; // centre the content vertically within the tile (§task3, Home cards) — text stays left
   minHeight?: number;
   corner?: ReactNode;
   style?: CSSProperties;
@@ -43,7 +43,7 @@ export default function CoverCard({
         ...style,
       }}
     >
-      <div style={{ position: 'relative', minHeight, background: cover, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      <div style={{ position: 'relative', minHeight, background: cover, display: 'flex', flexDirection: 'column', justifyContent: center ? 'center' : 'flex-end' }}>
         {/* soft champagne glint in a corner — the "still water" catching light */}
         <div
           aria-hidden
@@ -63,7 +63,7 @@ export default function CoverCard({
             background: 'linear-gradient(180deg, transparent 30%, rgba(5,13,18,0.5) 72%, rgba(5,13,18,0.72) 100%)',
           }}
         />
-        <div style={{ position: 'relative', padding: '18px 20px 16px', textAlign: center ? 'center' : undefined }}>
+        <div style={{ position: 'relative', padding: '18px 20px 16px' }}>
           {tag && (
             <div className="eyebrow" style={{ color: accent ? 'var(--gold)' : 'var(--ink-muted)' }}>
               {tag}
