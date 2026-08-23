@@ -19,6 +19,8 @@ import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
 import { ambient } from './audio/ambient';
 import { reminders } from './lib/reminders';
+import { notifications } from './lib/notifications';
+import { useAuth } from './lib/auth';
 import { useAppHistory } from './nav/history';
 
 /**
@@ -27,6 +29,7 @@ import { useAppHistory } from './nav/history';
  */
 export default function App() {
   const view = useView();
+  const { user } = useAuth();
   const { reduceMotion, ambientMuted, reminder } = usePrefs();
 
   // Keep hardware/browser Back inside the app (only Home-screen Back exits).
@@ -51,6 +54,12 @@ export default function App() {
   useEffect(() => {
     reminders.sync(reminder.enabled, reminder.time);
   }, [reminder.enabled, reminder.time]);
+
+  // Daily reminders (§task4/5): on login (native + signed in), request permission
+  // once and (re)schedule the three personalized notifications by first name.
+  useEffect(() => {
+    if (!user.isGuest && user.name) void notifications.sync(user.name);
+  }, [user.isGuest, user.name]);
   useEffect(() => {
     const go = () => ambient.enable();
     window.addEventListener('pointerdown', go, { once: true });

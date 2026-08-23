@@ -38,6 +38,9 @@ export const session = {
   reset: () => set(FRESH),
   go: (step: Step) => set({ step }),
   pickEmotion: (emotion: Emotion) => set({ emotion, step: 'response' }),
+  /** Meditate flow (§task2): record the arrival (if any) and go straight to the
+   *  player — no duration/support detour. */
+  beginMeditation: (emotion: Emotion | null) => set({ emotion, step: 'music' }),
   pickPath: (path: PathId) => set({ path, step: 'support' }),
   /** Record a check-in privately. Does NOT advance — the screen may reveal the
    *  soft crisis row first (§6.6), then the user chooses to continue. */

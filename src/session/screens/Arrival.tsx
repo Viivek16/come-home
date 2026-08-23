@@ -3,14 +3,19 @@ import Reveal from '../../ui/Reveal';
 import CheckInSlider from '../../ui/CheckInSlider';
 import { session, type Emotion } from '../../store/session';
 import { saveLastArrival } from '../../lib/storage';
+import { audioControls, SESSION_AUDIO } from '../../audio/audioStore';
 
 /** §6.2 Arrival — meet the person where they are. A connected slider over the six
  *  felt-states (§Phase C). Ghost exit is always present. */
 export default function Arrival({ onExit }: { onExit: () => void }) {
-  // Record the arrival locally (recommendation / reflection trail seam) and advance.
-  const choose = (id: Emotion) => {
-    saveLastArrival(id);
-    session.pickEmotion(id);
+  // Begin (§task2): record the arrival if one was chosen, start the default track
+  // on this tap (a user gesture — required by mobile autoplay policy), then open
+  // the player. An untouched slider means no presumed feeling → null.
+  const choose = (id: Emotion | null) => {
+    if (id) saveLastArrival(id);
+    audioControls.ensureLoaded(SESSION_AUDIO.musicTrack);
+    void audioControls.play();
+    session.beginMeditation(id);
   };
 
   return (

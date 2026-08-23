@@ -1,7 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react';
-import { Timer, Wind, HeartHandshake, Flower2 } from 'lucide-react';
+import { Timer, Wind, Flower2 } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
-import PracticeCard from '../../ui/PracticeCard';
 import CoverCard from '../../ui/CoverCard';
 import { usePrefs } from '../../store/prefs';
 import { session } from '../../store/session';
@@ -52,13 +51,9 @@ export default function HomeTab() {
     });
   }, []);
 
-  // Meditate → the full arrival → duration → player flow.
+  // Meditate → straight to arrival ("How are you arriving today?"), then Begin
+  // starts the session player (§task2). No intermediate opening splash.
   const meditate = () => {
-    session.reset();
-    app.setView('session');
-  };
-  // Check-in → straight to the arrival check-in (the richer slider).
-  const checkIn = () => {
     session.reset();
     session.go('arrival');
     app.setView('session');
@@ -92,7 +87,7 @@ export default function HomeTab() {
         <Reveal delay={0.16} className="mt-6">
           <div className="grid grid-cols-3 gap-3">
             <QuickAction Icon={Wind} label="Breathe" onClick={() => openTool('breathe')} />
-            <QuickAction Icon={HeartHandshake} label="Check-in" onClick={checkIn} />
+            <QuickAction Icon={Timer} label="Quiet Timer" onClick={() => openTool('timer')} />
             <QuickAction Icon={Flower2} label="Meditate" onClick={meditate} />
           </div>
         </Reveal>
@@ -101,6 +96,7 @@ export default function HomeTab() {
         <Reveal delay={0.28} className="mt-6">
           <CoverCard
             accent
+            center
             cover={cover}
             tag={`${todayCard.eyebrow} · ${todayDuration}`}
             title={todayCard.title}
@@ -127,6 +123,7 @@ export default function HomeTab() {
         {/* Multi-day programme — an atmospheric cover card, reusing the component. */}
         <Reveal delay={0.46} className="mt-4">
           <CoverCard
+            center
             cover={cover}
             tag={progTag}
             title={prog.title}
@@ -145,14 +142,6 @@ export default function HomeTab() {
           <p className="serif-italic" style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 'var(--t-md)' }}>
             {dailyLine()}
           </p>
-        </Reveal>
-
-        {/* A quiet, self-directed timer — Breathe now lives in Quick Actions above. */}
-        <Reveal delay={0.62}>
-          <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
-            Or take a quiet moment
-          </div>
-          <PracticeCard Icon={Timer} title="Quiet Timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
         </Reveal>
       </div>
     </div>

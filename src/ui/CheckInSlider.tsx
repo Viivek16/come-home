@@ -14,7 +14,7 @@ import Button from './Button';
 const STATE_IDS: Emotion[] = ['stress', 'afraid', 'depressed', 'angry', 'sleep-deprived', 'overwhelmed'];
 const labelOf = (id: Emotion) => FEELINGS.find((f) => f.id === id)?.label ?? '';
 
-export default function CheckInSlider({ onChoose }: { onChoose: (id: Emotion) => void }) {
+export default function CheckInSlider({ onChoose }: { onChoose: (id: Emotion | null) => void }) {
   const [idx, setIdx] = useState(2); // centred, but not committed until touched
   const [touched, setTouched] = useState(false);
   const pct = (idx / (STATE_IDS.length - 1)) * 100;
@@ -64,7 +64,9 @@ export default function CheckInSlider({ onChoose }: { onChoose: (id: Emotion) =>
         />
       </div>
 
-      <Button onClick={() => onChoose(currentId)} disabled={!touched}>
+      {/* Always tappable — Begin starts the session; an untouched slider passes no
+          presumed feeling (null). */}
+      <Button onClick={() => onChoose(touched ? currentId : null)}>
         Begin
       </Button>
     </div>

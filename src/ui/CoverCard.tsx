@@ -14,6 +14,7 @@ export default function CoverCard({
   sub,
   onClick,
   accent = false,
+  center = false,
   minHeight = 132,
   corner,
   style,
@@ -24,6 +25,7 @@ export default function CoverCard({
   sub?: string;
   onClick: () => void;
   accent?: boolean;
+  center?: boolean; // centre the tag/title/sub within the tile (§task3, Home cards)
   minHeight?: number;
   corner?: ReactNode;
   style?: CSSProperties;
@@ -61,7 +63,7 @@ export default function CoverCard({
             background: 'linear-gradient(180deg, transparent 30%, rgba(5,13,18,0.5) 72%, rgba(5,13,18,0.72) 100%)',
           }}
         />
-        <div style={{ position: 'relative', padding: '18px 20px 16px' }}>
+        <div style={{ position: 'relative', padding: '18px 20px 16px', textAlign: center ? 'center' : undefined }}>
           {tag && (
             <div className="eyebrow" style={{ color: accent ? 'var(--gold)' : 'var(--ink-muted)' }}>
               {tag}
