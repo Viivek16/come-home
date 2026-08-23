@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { sleepTimer } from '../audio/sleepTimer';
+import { sleep } from './sleep';
 
 /**
  * Player surface state (Phase A). Decouples the *player chrome* (full-screen vs.
@@ -26,8 +27,10 @@ export const player = {
   get collapsed() {
     return collapsed;
   },
-  /** The full session player mounted — a session now owns the transport. */
+  /** The full session player mounted — a session now owns the transport. Any
+   *  minimized sleep loop is dismissed (one shared audio element). */
   begin() {
+    sleep.dismiss();
     if (active && !collapsed) return;
     active = true;
     collapsed = false;

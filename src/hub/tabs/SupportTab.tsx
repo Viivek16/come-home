@@ -8,10 +8,10 @@ import { FEELINGS } from '../../data/feelings';
 export default function SupportTab() {
   return (
     <div className="screen">
-      <div className="mx-auto w-full max-w-md py-10">
+      <div className="mx-auto w-full max-w-md pt-6 pb-10">
         <Reveal delay={0.05}>
           <div className="eyebrow">Support</div>
-          <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 22 }}>
+          <h1 className="serif" style={{ fontSize: 'var(--t-xl)', lineHeight: 1.1, marginTop: 6, marginBottom: 22 }}>
             What's here right now?
           </h1>
         </Reveal>

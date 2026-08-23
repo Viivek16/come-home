@@ -37,11 +37,15 @@ export default function Transport({
   favKey,
   skip = 10,
   remaining = false,
+  playOnly = false,
 }: {
   bigTime?: boolean;
   favKey?: string;
   skip?: number;
   remaining?: boolean;
+  /** Just the play/pause control — no ±Ns skips, no seek slider, no time (§task-sleep,
+   *  for looping sleep sounds that have no meaningful position). */
+  playOnly?: boolean;
 }) {
   const { playing, position, duration, error, hasSource } = useAudio();
   // No configured source, or the source failed/stalled → calm "coming soon".
@@ -61,7 +65,7 @@ export default function Transport({
       )}
 
       <div className="flex items-center gap-8">
-        <SkipButton dir="back" secs={skip} onClick={() => audioControls.skip(-skip)} disabled={unavailable} />
+        {!playOnly && <SkipButton dir="back" secs={skip} onClick={() => audioControls.skip(-skip)} disabled={unavailable} />}
 
         <button
           onClick={() => audioControls.toggle()}
@@ -91,28 +95,30 @@ export default function Transport({
           )}
         </button>
 
-        <SkipButton dir="fwd" secs={skip} onClick={() => audioControls.skip(skip)} disabled={unavailable} />
+        {!playOnly && <SkipButton dir="fwd" secs={skip} onClick={() => audioControls.skip(skip)} disabled={unavailable} />}
       </div>
 
-      <div className="w-full">
-        <input
-          type="range"
-          className="seek"
-          style={{ '--seek-pct': `${pct}%` } as CSSProperties}
-          min={0}
-          max={duration || 0}
-          step={1}
-          value={Math.min(position, duration || 0)}
-          onChange={(e) => audioControls.seek(Number(e.target.value))}
-          aria-label="Seek"
-          aria-valuetext={`${fmt(position)} of ${fmt(duration)}`}
-          disabled={!duration || unavailable}
-        />
-        <div className="mt-1 flex justify-between eyebrow">
-          <span>{fmt(position)}</span>
-          <span>{rightTime}</span>
+      {!playOnly && (
+        <div className="w-full">
+          <input
+            type="range"
+            className="seek"
+            style={{ '--seek-pct': `${pct}%` } as CSSProperties}
+            min={0}
+            max={duration || 0}
+            step={1}
+            value={Math.min(position, duration || 0)}
+            onChange={(e) => audioControls.seek(Number(e.target.value))}
+            aria-label="Seek"
+            aria-valuetext={`${fmt(position)} of ${fmt(duration)}`}
+            disabled={!duration || unavailable}
+          />
+          <div className="mt-1 flex justify-between eyebrow">
+            <span>{fmt(position)}</span>
+            <span>{rightTime}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {favKey && <HeartButton favKey={favKey} label="this session" />}
 

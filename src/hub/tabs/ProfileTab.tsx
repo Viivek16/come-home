@@ -100,7 +100,7 @@ export default function ProfileTab() {
 
   return (
     <div className="screen">
-      <div className="mx-auto w-full max-w-md py-10">
+      <div className="mx-auto w-full max-w-md pt-6 pb-10">
         <Reveal delay={0.05}>
           <div className="eyebrow">Profile</div>
           <h1 className="serif" style={{ fontSize: 'var(--t-2xl)', marginTop: 8, marginBottom: 20 }}>

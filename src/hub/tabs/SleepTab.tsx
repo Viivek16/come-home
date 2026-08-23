@@ -22,7 +22,7 @@ export default function SleepTab() {
 
   return (
     <div className="screen">
-      <div className="mx-auto w-full max-w-md py-10">
+      <div className="mx-auto w-full max-w-md pt-6 pb-10">
         <Reveal delay={0.05}>
           <div className="flex items-center gap-3">
             <span className="glass grid place-items-center" style={{ width: 42, height: 42, borderRadius: 14 }}>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import MiniPlayer from './MiniPlayer';
+import SleepMini from './SleepMini';
 import { audio } from '../lib/audio';
 import { player } from '../store/player';
 import { app } from '../store/app';
@@ -22,5 +23,10 @@ export default function PlayerHost() {
     return off;
   }, []);
 
-  return <MiniPlayer />;
+  return (
+    <>
+      <MiniPlayer />
+      <SleepMini />
+    </>
+  );
 }
