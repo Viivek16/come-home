@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Reveal from '../ui/Reveal';
 import ExitButton from '../ui/ExitButton';
 import Transport from '../audio/Transport';
 import { nav } from '../nav/history';
 import { setMood } from '../store/scene';
 import { setDepth } from '../store/water';
-import { audioControls } from '../audio/audioStore';
+import { audioControls, useAudio } from '../audio/audioStore';
 import { player } from '../store/player';
 import { useSleepItem } from '../store/sleep';
 
@@ -33,11 +33,24 @@ export default function SleepPlayer() {
   // calm unavailable state; a real src later just plays. No code change needed.
   // The sleep player takes over the single shared audio element, so end any
   // collapsed session player first (ponytail: single-audio design → one owner).
+  const { ready } = useAudio();
+  const autoplayedFor = useRef<string | null>(null);
   useEffect(() => {
     if (!item) return;
     player.end();
+    autoplayedFor.current = null; // arm autoplay for this item
     audioControls.ensureLoaded(item.src, { loop: item.type === 'soundscape' });
   }, [item]);
+
+  // Start playing once the track is ready (§sleep). Best-effort: if the browser
+  // blocks autoplay, it stays paused and the play control is right there. Fires
+  // once per opened item.
+  useEffect(() => {
+    if (item?.src && ready && autoplayedFor.current !== item.id) {
+      autoplayedFor.current = item.id;
+      void audioControls.play();
+    }
+  }, [ready, item]);
 
   // Optional sleep timer — gently fade the audio out near the end.
   useEffect(() => {

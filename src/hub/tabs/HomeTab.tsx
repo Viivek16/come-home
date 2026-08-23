@@ -152,7 +152,7 @@ export default function HomeTab() {
           <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>
             Or take a quiet moment
           </div>
-          <PracticeCard Icon={Timer} title="Quiet timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
+          <PracticeCard Icon={Timer} title="Quiet Timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
         </Reveal>
       </div>
     </div>

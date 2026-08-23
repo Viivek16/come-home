@@ -1,9 +1,8 @@
 /**
- * Sleep & Rest content (§6 hub, §Phase6). Data-driven and content-ready: three
- * types — looping soundscapes, wind-downs, and sleep meditations. Each item's
- * audio `src` is null until real assets are supplied; the player then shows a
- * calm unavailable state. Add a real `src` (and nothing else) and it plays —
- * soundscapes loop, the rest play through once.
+ * Sleep & Rest content (§6 hub, §Phase6). Data-driven, three types: looping
+ * soundscapes, wind-downs, and sleep meditations. Each item points at a real audio
+ * asset in public/audio; the player loops soundscapes and plays the rest through
+ * once. A null `src` would fall back to the calm unavailable state.
  */
 export type SleepType = 'soundscape' | 'wind-down' | 'meditation';
 export type SleepItem = {
@@ -15,23 +14,23 @@ export type SleepItem = {
   src: string | null; // real asset URL later; null → calm unavailable state
 };
 
-// Titles are the in-app user flow's Sleep lists, verbatim. length is 'Loops' for
-// soundscapes and blank elsewhere until real assets carry a real duration.
+// length is 'Loops' for soundscapes and blank elsewhere. src maps each item to its
+// track in public/audio (served at /audio/*.mp3).
 export const SLEEP_ITEMS: SleepItem[] = [
-  { id: 's-rain', title: 'Rain on still water', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-shore', title: 'Night by the shore', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-bonfire', title: 'Cozy bonfire', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-galaxy', title: 'Stargazing galaxy', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 's-windy', title: 'Windy night', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: null },
-  { id: 'w-classical', title: 'Classical music', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
-  { id: 'w-basuri', title: 'Playful basuri', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
-  { id: 'w-piano', title: 'Classical piano', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
-  { id: 'w-bowls', title: 'Singing bowls', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
-  { id: 'w-om', title: 'Chanting Om', kind: 'Wind-down', length: '', type: 'wind-down', src: null },
-  { id: 'm-binaural', title: 'Binaural beats', kind: 'Sleep', length: '', type: 'meditation', src: null },
-  { id: 'm-delta', title: 'Delta waves', kind: 'Sleep', length: '', type: 'meditation', src: null },
-  { id: 'm-solfeggio', title: 'Solfeggio frequencies', kind: 'Sleep', length: '', type: 'meditation', src: null },
-  { id: 'm-astral', title: 'Astral music', kind: 'Sleep', length: '', type: 'meditation', src: null },
+  { id: 's-rain', title: 'Rain on Still Water', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: '/audio/rain.mp3' },
+  { id: 's-shore', title: 'Ocean Waves', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: '/audio/ocean.mp3' },
+  { id: 's-bonfire', title: 'Cozy Bonfire', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: '/audio/bonfire.mp3' },
+  { id: 's-galaxy', title: 'Cosmos', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: '/audio/stargazing.mp3' },
+  { id: 's-windy', title: 'Windy Night', kind: 'Soundscape', length: 'Loops', type: 'soundscape', src: '/audio/wind.mp3' },
+  { id: 'w-classical', title: 'Classical Music', kind: 'Wind-down', length: '', type: 'wind-down', src: '/audio/classical.mp3' },
+  { id: 'w-basuri', title: 'Flute', kind: 'Wind-down', length: '', type: 'wind-down', src: '/audio/flute.mp3' },
+  { id: 'w-piano', title: 'Classical Piano', kind: 'Wind-down', length: '', type: 'wind-down', src: '/audio/piano.mp3' },
+  { id: 'w-bowls', title: 'Singing Bowls', kind: 'Wind-down', length: '', type: 'wind-down', src: '/audio/singing-bowl.mp3' },
+  { id: 'w-om', title: 'Chanting Om', kind: 'Wind-down', length: '', type: 'wind-down', src: '/audio/om.mp3' },
+  { id: 'm-binaural', title: 'Binaural Beats', kind: 'Sleep', length: '', type: 'meditation', src: '/audio/binaural.mp3' },
+  { id: 'm-delta', title: 'Delta Waves', kind: 'Sleep', length: '', type: 'meditation', src: '/audio/delta-waves.mp3' },
+  { id: 'm-solfeggio', title: 'Solfeggio Frequencies', kind: 'Sleep', length: '', type: 'meditation', src: '/audio/solfeggio.mp3' },
+  { id: 'm-astral', title: 'Astral Music', kind: 'Sleep', length: '', type: 'meditation', src: '/audio/astral.mp3' },
 ];
 
 export const SLEEP_TYPES: { type: SleepType; heading: string; blurb: string }[] = [

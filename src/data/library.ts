@@ -5,10 +5,10 @@ export type LibraryItem = { id: string; title: string; feeling: string; length: 
 // Feelings are drawn from the shared six (data/feelings) so the Library selector
 // and the rest of the app speak one vocabulary.
 export const LIBRARY_ITEMS: LibraryItem[] = [
-  { id: 'l1', title: 'Placeholder grounding', feeling: 'Overwhelmed', length: '2 min', voice: 'Default' },
-  { id: 'l2', title: 'Placeholder stillness', feeling: 'Afraid', length: '5 min', voice: 'Default' },
-  { id: 'l3', title: 'Placeholder rest', feeling: 'Sleep deprived', length: '15 min', voice: 'Default' },
-  { id: 'l4', title: 'Placeholder calm', feeling: 'Stress', length: '20 min', voice: 'Default' },
+  { id: 'l1', title: 'Placeholder Grounding', feeling: 'Overwhelmed', length: '2 min', voice: 'Default' },
+  { id: 'l2', title: 'Placeholder Stillness', feeling: 'Afraid', length: '5 min', voice: 'Default' },
+  { id: 'l3', title: 'Placeholder Rest', feeling: 'Sleep Deprived', length: '15 min', voice: 'Default' },
+  { id: 'l4', title: 'Placeholder Calm', feeling: 'Stress', length: '20 min', voice: 'Default' },
 ];
 
 // ---- Filter helpers (§Phase3), derived from the REAL item data — no new taxonomy.

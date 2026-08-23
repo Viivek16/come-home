@@ -29,7 +29,7 @@ export type Programme = {
 export const PROGRAMMES: Programme[] = [
   {
     id: 'seven-days-home',
-    title: 'Seven days home',
+    title: 'Seven Days Home',
     blurb: 'A quiet week of coming back to yourself.',
     intro:
       'A quiet week of coming back to yourself — one small sitting a day. Take the days in any order, or miss a few. Nothing is lost.',
@@ -45,7 +45,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'three-quiet-days',
-    title: 'Three quiet days',
+    title: 'Three Quiet Days',
     blurb: 'A gentle first step — just three sittings.',
     intro:
       'A small beginning, whenever a whole week feels like a lot. Three unhurried sittings — start with any of them, and stop whenever you like.',
@@ -57,7 +57,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'nights-of-rest',
-    title: 'Nights of rest',
+    title: 'Nights of Rest',
     blurb: 'Wind-downs for the harder nights.',
     intro:
       'A series of gentle wind-downs for the nights that feel long. These are still in the making — the shape is here, the sound is on its way.',
@@ -70,7 +70,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'meeting-hard-feelings',
-    title: 'Meeting hard feelings',
+    title: 'Meeting Hard Feelings',
     blurb: 'Staying with what’s tender, gently.',
     intro:
       'A slow, kind way to sit beside the feelings that are harder to hold. These sittings are still being made with care — they’ll arrive when they’re ready.',

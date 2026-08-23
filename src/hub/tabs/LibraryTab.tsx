@@ -88,7 +88,7 @@ export default function LibraryTab() {
             Practices
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <PracticeCard Icon={Timer} title="Quiet timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
+            <PracticeCard Icon={Timer} title="Quiet Timer" sub="Silent · your pace" onClick={() => openTool('timer')} />
             <PracticeCard Icon={Wind} title="Breathe" sub="Guided · visual" onClick={() => openTool('breathe')} />
           </div>
         </Reveal>

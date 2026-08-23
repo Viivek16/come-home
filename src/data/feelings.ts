@@ -10,7 +10,7 @@ export const FEELINGS: Feeling[] = [
   { id: 'afraid', label: 'Afraid', icon: 'cloud' },
   { id: 'depressed', label: 'Depressed', icon: 'rain' },
   { id: 'angry', label: 'Angry', icon: 'flame' },
-  { id: 'sleep-deprived', label: 'Sleep deprived', icon: 'moon' },
+  { id: 'sleep-deprived', label: 'Sleep Deprived', icon: 'moon' },
   { id: 'overwhelmed', label: 'Overwhelmed', icon: 'waves' },
 ];
 
