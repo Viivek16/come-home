@@ -4,6 +4,7 @@ import Reveal from '../../ui/Reveal';
 import PracticeCard from '../../ui/PracticeCard';
 import CoverCard from '../../ui/CoverCard';
 import HeartButton from '../../ui/HeartButton';
+import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
 import { openTool } from '../../store/tool';
@@ -37,7 +38,6 @@ export default function LibraryTab() {
   const anyFilter = filter.time !== 'all' || filter.feeling !== 'all';
   const clear = () => update({ time: 'all', feeling: 'all' });
 
-  const feelings = FEELINGS.map((f) => f.label); // the shared six felt-states (matches the flow)
   const filtered = LIBRARY_ITEMS.filter(
     (l) => inTimeBucket(l, filter.time as TimeBucket) && (filter.feeling === 'all' || l.feeling === filter.feeling),
   );
@@ -104,9 +104,9 @@ export default function LibraryTab() {
             )}
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-            <CategoryChip label="All" cover={cover} on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })} />
-            {feelings.map((f) => (
-              <CategoryChip key={f} label={f} cover={cover} on={filter.feeling === f} onClick={() => update({ feeling: f })} />
+            <CategoryChip label="All" icon="sun" cover={cover} on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })} />
+            {FEELINGS.map((f) => (
+              <CategoryChip key={f.id} label={f.label} icon={f.icon} cover={cover} on={filter.feeling === f.label} onClick={() => update({ feeling: f.label })} />
             ))}
           </div>
         </Reveal>
@@ -155,7 +155,7 @@ export default function LibraryTab() {
   );
 }
 
-function CategoryChip({ label, cover, on, onClick }: { label: string; cover: string; on: boolean; onClick: () => void }) {
+function CategoryChip({ label, icon, cover, on, onClick }: { label: string; icon: GradientIconName; cover: string; on: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -164,8 +164,8 @@ function CategoryChip({ label, cover, on, onClick }: { label: string; cover: str
       style={{ width: 92, textAlign: 'center', transitionTimingFunction: 'var(--ease-calm)' }}
     >
       <span
+        className="grid place-items-center"
         style={{
-          display: 'block',
           height: 60,
           borderRadius: 14,
           background: cover,
@@ -179,6 +179,7 @@ function CategoryChip({ label, cover, on, onClick }: { label: string; cover: str
           aria-hidden
           style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 80% 15%, rgba(232,201,155,0.22), transparent 55%)' }}
         />
+        <GradientIcon name={icon} size={24} />
       </span>
       <span
         className="eyebrow"

@@ -2,7 +2,6 @@ import Reveal from '../../ui/Reveal';
 import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
 import { SUPPORT_DISEASES } from '../../data/supportCategories';
 import { FEELINGS } from '../../data/feelings';
-import type { Emotion } from '../../store/session';
 
 /** §6 Support (in-app user flow). Two option blocks as calm tile grids: a disease
  *  list and the six felt-states, each feeling carrying a soft-gradient line icon. */
@@ -25,22 +24,12 @@ export default function SupportTab() {
         <TileGrid
           delay={0.22}
           title="How are you feeling today?"
-          tiles={FEELINGS.map((f) => ({ key: f.id, label: f.label, icon: FEELING_ICON[f.id] }))}
+          tiles={FEELINGS.map((f) => ({ key: f.id, label: f.label, icon: f.icon }))}
         />
       </div>
     </div>
   );
 }
-
-/** Feeling → soft-gradient glyph (§Phase C). Calm line icons only, gold, never red. */
-const FEELING_ICON: Record<Emotion, GradientIconName> = {
-  stress: 'spark',
-  afraid: 'cloud',
-  depressed: 'rain',
-  angry: 'flame',
-  'sleep-deprived': 'moon',
-  overwhelmed: 'waves',
-};
 
 type Tile = { key: string; label: string; icon?: GradientIconName };
 

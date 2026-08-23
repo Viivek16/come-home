@@ -117,7 +117,9 @@ export default function ProfileTab() {
         <Reveal delay={0.16}>
           <div
             className="-mx-[22px] flex gap-3 overflow-x-auto px-[22px] pb-2"
-            style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}
+            // scroll-padding-left so snap-on-load keeps the first card inset by the
+            // screen padding instead of pulling it flush to the device edge.
+            style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', scrollPaddingLeft: '22px' }}
           >
             {PROGRAMMES.map((p) => (
               <ProgrammeCard key={p.id} p={p} />

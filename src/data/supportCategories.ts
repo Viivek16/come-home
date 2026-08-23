@@ -4,8 +4,8 @@
 export const SUPPORT_DISEASES: string[] = [
   'Cancer',
   'Dialysis',
-  'Hyper acidity / Digestion issues',
-  'Lungs / Breathing issues',
+  'Digestion problems',
+  'Breathing problems',
   'Skin treatment',
   'Sexual problems',
   'Knee / Joint problems',

@@ -512,9 +512,10 @@ body {
 }
 
 /* ============================================================
-   FLOATING TAB BAR (Apple-style translucent chrome, §1/§2)
-   A detached pill that content scrolls *under*. It auto-hides on
-   scroll-down and returns on scroll-up (spring, in TabBar.tsx).
+   FLOATING NAV (minimalist, §1/§2)
+   Four options floating over a soft scroll-edge scrim; the active
+   one lights up gold. It auto-hides on scroll-down and returns on
+   scroll-up (spring, in TabBar.tsx).
    ============================================================ */
 .tabbar-wrap {
   position: fixed;
@@ -525,80 +526,52 @@ body {
   display: flex;
   justify-content: center;
   padding: 0 16px calc(var(--safe-bottom) + 14px);
-  pointer-events: none; /* only the pill itself is interactive */
+  pointer-events: none; /* only the nav itself is interactive */
 }
-/* Scroll-edge scrim: content dissolves into the dark before it reaches the
-   floating bar, so nothing "merges" behind the glass (§2). */
+/* Scroll-edge scrim: content dissolves into the dark before it reaches the nav, and
+   it gives the floating icons a legible floor over any backdrop (§2). */
 .tabbar-scrim {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 150px;
+  height: 160px;
   z-index: 49;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(5, 13, 18, 0.55) 55%, rgba(4, 11, 16, 0.9) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(5, 13, 18, 0.5) 46%, rgba(5, 13, 18, 0.8) 72%, rgba(4, 11, 16, 0.94) 100%);
 }
+/* Minimalist floating nav: no container, just the four options over the scroll-edge
+   scrim. The active option lights up gold with a soft glow; a dark drop-shadow keeps
+   every icon legible over any backdrop (nav rework). */
 .tabbar {
-  position: relative; /* anchor for the sliding active bubble */
   pointer-events: auto;
   display: flex;
   width: 100%;
   max-width: 420px;
   gap: 2px;
-  padding: 6px 8px;
-  border-radius: 26px;
-  /* Thicker material than a card: heavier blur + a deeper shadow so a large
-     surface reads as thicker glass (§12). Alpha nudged up (§Phase B) so labels
-     never merge with a bright scene behind the bar. */
-  background: linear-gradient(157deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.075));
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(26px) saturate(1.6);
-  -webkit-backdrop-filter: blur(26px) saturate(1.6);
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.5),
-    0 4px 14px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  padding: 4px 8px;
 }
 .tabbar-btn {
-  position: relative;
-  z-index: 1; /* icon + label ride above the sliding bubble behind them */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 8px 0 7px;
   min-height: 52px;
-  border-radius: 20px;
-  transition: color 0.35s var(--ease-calm);
+  transition: color 0.4s var(--ease-calm);
 }
 .tabbar-btn-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+  transition: filter 0.4s var(--ease-calm);
 }
-/* The champagne-gold active bubble (§Phase B), a small soft glass-gold tile that
-   sits behind the active icon and glides between tabs, instead of a full-tab fill.
-   A single element positioned by the active tab's measured centre (set inline in
-   TabBar), gliding via a CSS transition on `left`. The global reduced-motion rules
-   zero this transition, so it snaps when motion is reduced. Driving `left` directly
-   keeps the glide independent of framer's layout projection. */
-.tabbar-active-pill {
-  position: absolute;
-  top: 4px;
-  left: 0;
-  width: 40px;
-  height: 32px;
-  z-index: 0;
-  border-radius: 13px;
-  background: linear-gradient(157deg, rgba(232, 201, 155, 0.26), rgba(232, 201, 155, 0.1));
-  border: 1px solid rgba(232, 201, 155, 0.36);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 16px rgba(232, 201, 155, 0.18);
-  transition: left 0.5s var(--ease-calm);
+/* The active option lights up: gold (from the button color) plus a soft champagne glow. */
+.tabbar-btn[aria-current='page'] .tabbar-btn-inner {
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(232, 201, 155, 0.6));
 }
 .tabbar-btn:active {
   transform: scale(0.96);
