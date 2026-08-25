@@ -11,6 +11,7 @@ import ProgrammeOverview from './programme/ProgrammeOverview';
 import SleepPlayer from './sleep/SleepPlayer';
 import Sanctuary from './sanctuary/Sanctuary';
 import Journal from './journal/Journal';
+import FlowContainer from './flow/FlowContainer';
 import PlayerHost from './audio/PlayerHost';
 import { app, useView } from './store/app';
 import { onboardingDone, markPresence } from './lib/storage';
@@ -104,6 +105,8 @@ export default function App() {
           <Sanctuary />
         ) : view === 'journal' ? (
           <Journal />
+        ) : view === 'flow' ? (
+          <FlowContainer />
         ) : (
           <Hub />
         )}

@@ -1,7 +1,8 @@
 import Reveal from '../../ui/Reveal';
 import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
-import { SUPPORT_DISEASES } from '../../data/supportCategories';
+import { DISEASE_FLOWS } from '../../data/flows';
 import { FEELINGS } from '../../data/feelings';
+import { enterFlow } from '../../store/flow';
 
 /** §6 Support (in-app user flow). Two option blocks as calm tile grids: a disease
  *  list and the six felt-states, each feeling carrying a soft-gradient line icon. */
@@ -19,7 +20,7 @@ export default function SupportTab() {
         <TileGrid
           delay={0.12}
           title="Are you dealing with some disease?"
-          tiles={SUPPORT_DISEASES.map((label) => ({ key: label, label }))}
+          tiles={DISEASE_FLOWS.map((f) => ({ key: f.id, label: f.title }))}
         />
         <TileGrid
           delay={0.22}
@@ -48,6 +49,7 @@ function TileGrid({ title, tiles, delay }: { title: string; tiles: Tile[]; delay
             <button
               key={t.key}
               type="button"
+              onClick={() => enterFlow(t.key)}
               className="glass flex flex-col items-center justify-center gap-2 px-3 py-4 text-center transition-transform duration-300 active:scale-[0.98]"
               style={{ minHeight: 88, borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
             >
