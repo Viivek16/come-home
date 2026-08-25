@@ -176,7 +176,17 @@ export function markOnboardingDone(): void {
   local()?.setItem(ONBOARDING_KEY, '1');
 }
 
-export type HistoryEntry = { ts: number; emotion: Emotion | null; checkins: Checkin[] };
+/** A Support-flow visit (§Phase C): the tile the user opened plus its kind, and
+ *  the soft close check-in. Optional on HistoryEntry so session entries — and every
+ *  existing consumer that reads emotion/checkins — are untouched. */
+export type FlowVisit = {
+  id: string;
+  kind: 'disease' | 'feeling';
+  title: string;
+  left: 'lighter' | 'a-little' | 'still-heavy';
+};
+
+export type HistoryEntry = { ts: number; emotion: Emotion | null; checkins: Checkin[]; flow?: FlowVisit };
 
 // Best-effort — a failed IDB op never blocks or breaks a session.
 export async function addHistory(e: HistoryEntry): Promise<void> {

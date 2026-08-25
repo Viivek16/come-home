@@ -3,6 +3,7 @@ import { app } from './app';
 import { hub } from './hub';
 import { nav } from '../nav/history';
 import { audioControls } from '../audio/audioStore';
+import { addHistory, type FlowVisit } from '../lib/storage';
 import { getFlowById } from '../data/flows';
 
 /**
@@ -50,9 +51,20 @@ export const flow = {
   exit() {
     nav.back();
   },
-  /** Close → Home (§Phase B): the guided sound ends, land on the Home tab. The
-   *  richer transition is Phase C; for now this is the plain view-state action. */
+  /** Close → Home (§Phase C): record the visit through the existing profile
+   *  arrival path (the tapped entry + its soft close check-in), end the sound, and
+   *  land on the Home tab. Presence is registered when the close screen is reached.
+   *  No streak or counter is ever shown — this is silent history only. */
   home() {
+    const entry = id ? getFlowById(id) : null;
+    if (entry && checkin) {
+      void addHistory({
+        ts: Date.now(),
+        emotion: null,
+        checkins: [],
+        flow: { id: entry.id, kind: entry.kind, title: entry.title, left: checkin as FlowVisit['left'] },
+      });
+    }
     audioControls.stop();
     id = null;
     step = 0;

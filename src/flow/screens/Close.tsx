@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
 import ExitButton from '../../ui/ExitButton';
 import { flow } from '../../store/flow';
+import { markPresence } from '../../lib/storage';
 import { CHECK_IN, type FlowEntry } from '../../data/flows';
 
 /**
@@ -14,6 +15,12 @@ import { CHECK_IN, type FlowEntry } from '../../data/flows';
  */
 export default function Close({ entry }: { entry: FlowEntry }) {
   const [choice, setChoice] = useState<(typeof CHECK_IN)[number]['id'] | null>(null);
+
+  // Reaching the close screen means the practice is done — register the day in the
+  // presence spine through the same path any session uses (dedup'd per day). Silent.
+  useEffect(() => {
+    void markPresence();
+  }, []);
 
   const pick = (id: (typeof CHECK_IN)[number]['id']) => {
     flow.pickCheckin(id);

@@ -40,7 +40,9 @@ export default function HomeTab() {
   const progNext = programme.nextDayIndex(prog);
 
   useEffect(() => {
-    getHistory().then((h) => setRecent(h[0] ?? null));
+    // The "last time you arrived" card is about felt-state arrivals, so skip
+    // Support-flow visits (which may be a disease and carry no emotion). §Phase C
+    getHistory().then((h) => setRecent(h.find((e) => !e.flow) ?? null));
     // Weekly Spine activity, days you came home: presence (app open / first play)
     // unioned with the days a moment was gathered (sessions, reflections, journal).
     Promise.all([getHistory(), getReflections(), getJournal(), getPresence()]).then(([h, r, j, p]) => {

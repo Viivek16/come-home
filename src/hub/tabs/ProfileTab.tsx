@@ -17,6 +17,7 @@ import {
   getJournal,
   getPresence,
   type HistoryEntry,
+  type FlowVisit,
   type Reflection,
   type JournalEntry,
 } from '../../lib/storage';
@@ -31,6 +32,13 @@ const CHECKIN_PHRASE: Record<Checkin, string> = {
   same: 'stayed with it',
   struggling: 'were still struggling',
   'prefer-not': 'kept it private',
+};
+
+// How a Support-flow visit reads back in the trail (§Phase C). None reads as failure.
+const FLOW_LEFT: Record<FlowVisit['left'], string> = {
+  lighter: 'left a little lighter',
+  'a-little': 'felt a little ease',
+  'still-heavy': 'stayed with what was heavy',
 };
 
 /** §6 Profile — "Your journey" (§Phase F). A gentle, guilt-free reflection space:
@@ -87,6 +95,10 @@ export default function ProfileTab() {
   type Moment = { ts: number; text: string };
   const moments: Moment[] = [
     ...history.map((h): Moment => {
+      if (h.flow) {
+        const opener = h.flow.kind === 'feeling' ? `You arrived ${h.flow.title}` : `You made space for ${h.flow.title}`;
+        return { ts: h.ts, text: `${opener}, and ${FLOW_LEFT[h.flow.left]}.` };
+      }
       const last = h.checkins[h.checkins.length - 1];
       return {
         ts: h.ts,
