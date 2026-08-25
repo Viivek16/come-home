@@ -16,7 +16,7 @@ export default function Locate({ entry }: { entry: FlowEntry }) {
       <ExitButton />
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center text-center">
         <Reveal className="flex justify-center">
-          <BodyGlow anchor={entry.anchor} size={200} />
+          <BodyGlow anchor={entry.anchor} size={220} />
         </Reveal>
 
         <Reveal delay={0.35}>

@@ -299,6 +299,40 @@ body {
   animation: reveal-up 0.72s var(--ease-calm) both;
 }
 
+/* ---- Word-by-word "surface through mist" reveal (§Phase-polish) ------------
+   The affirmation words rise and sharpen out of a soft blur, one after another,
+   like breath condensing into words on still water. Enter-only, ease-out. The
+   global reduced-motion rule zeroes the duration, so words simply appear. */
+@keyframes word-surface {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+    filter: blur(9px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+.word-surface {
+  display: inline-block;
+  animation: word-surface 1.15s var(--ease-calm) both;
+  will-change: opacity, transform, filter;
+}
+
+/* Faint champagne motes drifting in the figure's light — opacity only, so it
+   never competes with the water shader (§Phase-polish body glow). */
+@keyframes mote-twinkle {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* ---- Breathing orb (§Phase2) — soft champagne glass sphere. Scale is driven
    INLINE per phase (transform only, GPU); the phase duration/easing come from the
    pattern, so there is no requestAnimationFrame loop. Reduced motion: the global

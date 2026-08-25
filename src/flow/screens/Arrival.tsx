@@ -1,17 +1,21 @@
 import Button from '../../ui/Button';
 import Reveal from '../../ui/Reveal';
 import ExitButton from '../../ui/ExitButton';
+import RevealText from '../RevealText';
 import { useBreath } from '../../breath/useBreath';
 import { flow } from '../../store/flow';
 import type { FlowEntry } from '../../data/flows';
 
 /**
- * Screen 1 — Arrival (§Phase B). Full-bleed calm: the affirmation as one large
- * serif line, centred, fading in slowly. A soft halo breathes on the shared clock
- * behind it. One action to continue. No intake, no questions.
+ * Screen 1 — Arrival (§Phase B, polished). Full-bleed calm: the affirmation
+ * surfaces word by word out of a soft mist (RevealText), over a champagne halo
+ * that breathes on the shared clock. One quiet action to continue. No questions.
  */
 export default function Arrival({ entry }: { entry: FlowEntry }) {
   const b = useBreath();
+  // Words finish arriving before the action fades in.
+  const wordCount = entry.affirmation.split(' ').length;
+  const buttonDelay = 0.15 + wordCount * 0.085 + 0.5;
 
   return (
     <div className="screen">
@@ -23,23 +27,24 @@ export default function Arrival({ entry }: { entry: FlowEntry }) {
             aria-hidden
             style={{
               position: 'absolute',
-              width: 320,
-              height: 320,
+              width: 360,
+              height: 360,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(232,201,155,0.14), transparent 68%)',
+              background: 'radial-gradient(circle, rgba(232,201,155,0.16), rgba(232,201,155,0.04) 45%, transparent 70%)',
               transform: `scale(${1 + b * 0.12})`,
-              opacity: 0.45 + b * 0.4,
+              opacity: 0.4 + b * 0.4,
               pointerEvents: 'none',
             }}
           />
-          <Reveal style={{ animationDuration: '1.8s' }}>
-            <p className="serif" style={{ fontSize: 'var(--t-xl)', lineHeight: 1.3, position: 'relative' }}>
-              {entry.affirmation}
-            </p>
-          </Reveal>
+          <RevealText
+            key={entry.id}
+            text={entry.affirmation}
+            className="serif"
+            style={{ fontSize: 'var(--t-xl)', lineHeight: 1.35, position: 'relative' }}
+          />
         </div>
 
-        <Reveal delay={1.1} className="mt-12">
+        <Reveal delay={buttonDelay} className="mt-14">
           <Button onClick={() => flow.next()}>Begin</Button>
         </Reveal>
       </div>
