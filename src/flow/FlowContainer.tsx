@@ -1,28 +1,45 @@
 import ExitButton from '../ui/ExitButton';
 import { useFlow } from '../store/flow';
 import { getFlowById } from '../data/flows';
+import Arrival from './screens/Arrival';
+import Locate from './screens/Locate';
+import Practice from './screens/Practice';
+import Close from './screens/Close';
 
 /**
- * Companion-flow container (§Phase A) — a minimal placeholder that proves the
- * wiring: it reads the current flow entry and shows its title + affirmation, with
- * the always-visible exit. The real 4-screen (disease) / 3-screen (feeling)
- * experience is Phase B; this is intentionally unstyled beyond the base tokens.
+ * Companion-flow container (§Phase B). Drives the screen set from the entry's kind:
+ * a disease flow runs 4 screens (arrival → locate → practice → close), a feeling
+ * flow runs 3 (the locate step folds into the practice, keeping it lighter). The
+ * step index lives in the flow store; each screen advances with flow.next().
  */
+const STEPS = {
+  disease: ['arrival', 'locate', 'practice', 'close'],
+  feeling: ['arrival', 'practice', 'close'],
+} as const;
+
 export default function FlowContainer() {
-  const { id } = useFlow();
+  const { id, step } = useFlow();
   const entry = id ? getFlowById(id) : null;
 
-  return (
-    <div className="screen">
-      <ExitButton />
-      {entry && (
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-          <div className="eyebrow">{entry.title}</div>
-          <p className="serif" style={{ fontSize: 'var(--t-lg)', lineHeight: 1.3, marginTop: 12 }}>
-            {entry.affirmation}
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  if (!entry) {
+    return (
+      <div className="screen">
+        <ExitButton />
+      </div>
+    );
+  }
+
+  const screens = STEPS[entry.kind];
+  const screen = screens[Math.min(step, screens.length - 1)];
+
+  switch (screen) {
+    case 'arrival':
+      return <Arrival entry={entry} />;
+    case 'locate':
+      return <Locate entry={entry} />;
+    case 'practice':
+      return <Practice entry={entry} />;
+    case 'close':
+      return <Close entry={entry} />;
+  }
 }

@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
 import { app } from './app';
+import { hub } from './hub';
 import { nav } from '../nav/history';
+import { audioControls } from '../audio/audioStore';
 import { getFlowById } from '../data/flows';
 
 /**
@@ -47,6 +49,17 @@ export const flow = {
   /** Leave the flow. Pops the entry pushed on enter, so Back stays in sync. */
   exit() {
     nav.back();
+  },
+  /** Close → Home (§Phase B): the guided sound ends, land on the Home tab. The
+   *  richer transition is Phase C; for now this is the plain view-state action. */
+  home() {
+    audioControls.stop();
+    id = null;
+    step = 0;
+    checkin = null;
+    hub.setTab('home');
+    app.setView('hub');
+    notify();
   },
 };
 

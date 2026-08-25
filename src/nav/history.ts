@@ -73,6 +73,9 @@ function applyLoc(loc: Loc): Loc {
     programme.clearActiveDay();
     player.end();
   }
+  // Leaving the flow view (§Phase B): the guided practice audio belongs to the
+  // flow (no mini player owns it), so stop it on the way out.
+  if (app.view === 'flow') audioControls.stop();
   if (loc.startsWith('tool:')) {
     tool.set(loc.slice(5) as ToolId);
     app.setView('tool');
