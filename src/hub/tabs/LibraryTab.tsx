@@ -7,6 +7,7 @@ import HeartButton from '../../ui/HeartButton';
 import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
 import { session } from '../../store/session';
 import { app } from '../../store/app';
+import { enterFlow } from '../../store/flow';
 import { openTool } from '../../store/tool';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { useFavorites } from '../../store/favorites';
@@ -106,7 +107,8 @@ export default function LibraryTab() {
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
             <CategoryChip label="All" icon="sun" cover={cover} on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })} />
             {FEELINGS.map((f) => (
-              <CategoryChip key={f.id} label={f.label} icon={f.icon} cover={cover} on={filter.feeling === f.label} onClick={() => update({ feeling: f.label })} />
+              // Tapping a feeling launches the same companion flow as the Support tab.
+              <CategoryChip key={f.id} label={f.label} icon={f.icon} cover={cover} on={false} onClick={() => enterFlow(f.id)} />
             ))}
           </div>
         </Reveal>
