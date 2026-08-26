@@ -23,11 +23,14 @@ function BreathingFigure({ anchor }: { anchor: BodyAnchor }) {
   const breath = useBreath();
   const fallback = <BodyGlow anchor={anchor} size={220} />;
   return (
-    <Suspense fallback={fallback}>
-      {/* quadThresholdDeg=5 drops this mesh's triangle diagonals and leaves the
-          clean quad grid (measured sweet spot for human.glb; 1 shows diagonals). */}
-      <BodyMesh breath={breath} color={FIGURE_COLOR} quadThresholdDeg={5} size={260} fallback={fallback} />
-    </Suspense>
+    // BodyMesh fills its parent, so give it a fixed footprint (and centre the
+    // 2D fallback within it). quadThresholdDeg=5 drops this mesh's triangle
+    // diagonals and leaves the clean quad grid (1 still shows them here).
+    <div style={{ width: 260, height: 338, display: 'grid', placeItems: 'center' }}>
+      <Suspense fallback={fallback}>
+        <BodyMesh breath={breath} color={FIGURE_COLOR} quadThresholdDeg={5} fallback={fallback} />
+      </Suspense>
+    </div>
   );
 }
 

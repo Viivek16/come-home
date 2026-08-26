@@ -1,199 +1,176 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+// BodyMesh.tsx
+// Interactive glowing wireframe human for the Support "locate" screen.
+// Loads a real human GLB, renders its quad wireframe as glowing lines on a
+// transparent canvas over the water background, and lets the user rotate and
+// zoom it freely. Matches the reference look by using EdgesGeometry with a low
+// angle threshold, which drops the triangle diagonals and leaves the clean quad
+// grid, instead of a messy full triangle wireframe.
+//
+// Requires: npm i three
+// Model: put a clean quad-topology human GLB at public/models/human.glb.
+// See the accompanying prompt for CC0 sourcing options.
 
-/**
- * Interactive glowing wireframe human (§Support · locate). A real anatomical GLB
- * (CC0 MakeHuman base mesh, public/models/human.glb) drawn as its clean quad grid:
- * EdgesGeometry with a low angle threshold drops the triangle diagonals the GLB
- * carries and leaves the even quad wireframe, glowing on the dark water. The user
- * rotates it freely (drag) and zooms (pinch / wheel); panning is off with gentle
- * damping, which suits a calm app. The glow breathes on the shared `breath` clock.
- *
- * Lazy-imported by the locate screen so three + the model touch only this chunk.
- * WebGL-guarded and model-load-guarded → renders `fallback` (the 2D body of light)
- * if either is missing, so the screen never blanks. DPR capped, paused when hidden,
- * fully disposed on unmount so it holds no GPU context after the screen is left.
- *
- * If a swapped-in model still shows stray triangle edges, raise `quadThresholdDeg`
- * (1 → 10..20) until only the quad grid reads.
- */
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+type Props = {
+  modelUrl?: string
+  // Line colour. App accent gold by default. Try '#5FE3D8' for the cyan look.
+  color?: string
+  // Degrees. 1 gives the cleanest quad grid. Raise to 10 to 20 if a model shows
+  // too many stray edges.
+  quadThresholdDeg?: number
+  // Optional external breath value 0..1 from the app breath clock. If omitted the
+  // component runs its own gentle ~4s in, 6s out pulse.
+  breath?: number
+  autoRotate?: boolean
+  // Rendered if WebGL is unavailable or the model fails to load. Pass the existing
+  // 2D body-of-light here so the screen never blanks.
+  fallback?: ReactNode
+  className?: string
+}
+
 export default function BodyMesh({
-  breath,
-  fallback,
+  modelUrl = '/models/human.glb',
   color = '#E3C08D',
   quadThresholdDeg = 1,
-  size = 260,
-  className = '',
-}: {
-  breath: number;
-  fallback: ReactNode;
-  color?: string;
-  quadThresholdDeg?: number;
-  size?: number;
-  className?: string;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [failed, setFailed] = useState(false);
-  const [ready, setReady] = useState(false);
-  const breathRef = useRef(breath);
-  breathRef.current = breath; // latest breath, read imperatively in the RAF loop
-
-  const w = size;
-  const h = Math.round(size * 1.3);
+  breath,
+  autoRotate = false,
+  fallback = null,
+  className,
+}: Props) {
+  const mountRef = useRef<HTMLDivElement>(null)
+  const breathRef = useRef<number | undefined>(breath)
+  breathRef.current = breath
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const mount = mountRef.current
+    if (!mount) return
 
-    let disposed = false; // the GLB may resolve after a fast exit — don't touch a torn-down renderer
-
-    const onLost = (e: Event) => {
-      e.preventDefault();
-      cancelAnimationFrame(raf);
-      if (!disposed) setFailed(true);
-    };
-    canvas.addEventListener('webglcontextlost', onLost, false);
-
-    let renderer: THREE.WebGLRenderer;
+    let renderer: THREE.WebGLRenderer
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
     } catch {
-      canvas.removeEventListener('webglcontextlost', onLost);
-      setFailed(true);
-      return;
+      setFailed(true)
+      return
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); // cap DPR (§4)
-    renderer.setSize(w, h, false);
-    renderer.setClearColor(0x000000, 0);
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
-    camera.position.set(0.9, 0.15, 4.3);
+    let disposed = false
+    let raf = 0
+    const clock = new THREE.Clock()
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.enablePan = false; // calm: rotate + zoom only
-    controls.rotateSpeed = 0.9;
-    controls.zoomSpeed = 0.8;
-    controls.minDistance = 2.2;
-    controls.maxDistance = 8;
-    controls.target.set(0, 0, 0);
+    const width = mount.clientWidth || 1
+    const height = mount.clientHeight || 1
 
-    const material = new THREE.LineBasicMaterial({
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100)
+    camera.position.set(0, 0, 6)
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75))
+    renderer.setSize(width, height)
+    renderer.setClearColor(0x000000, 0)
+    mount.appendChild(renderer.domElement)
+
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.08
+    controls.enablePan = false
+    controls.rotateSpeed = 0.7
+    controls.autoRotate = autoRotate
+    controls.autoRotateSpeed = 0.5
+    controls.minDistance = 3
+    controls.maxDistance = 9
+
+    const inner = new THREE.Group()
+    const outer = new THREE.Group()
+    outer.add(inner)
+    scene.add(outer)
+
+    const lineMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(color),
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
-      blending: THREE.AdditiveBlending, // stacks front + back edges into a soft glow
-    });
-    let lines: THREE.LineSegments | null = null;
-    let edges: THREE.EdgesGeometry | null = null;
+    })
 
-    let raf = 0;
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      controls.update();
-      const b = breathRef.current;
-      material.opacity = 0.42 + b * 0.28; // brightness breathes on the shared clock
-      if (lines) lines.scale.setScalar(1 + b * 0.02); // a gentle swell
-      renderer.render(scene, camera);
-    };
-    const start = () => {
-      if (!raf && !document.hidden) tick();
-    };
-    const stop = () => {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-    };
-    const onVis = () => (document.hidden ? stop() : start());
-    document.addEventListener('visibilitychange', onVis);
-
-    const loader = new GLTFLoader();
+    const loader = new GLTFLoader()
     loader.load(
-      `${import.meta.env.BASE_URL}models/human.glb`,
+      modelUrl,
       (gltf) => {
-        if (disposed) return;
-        // Collect every mesh as a position-only geometry in world space, merge,
-        // then take the quad wireframe. Position-only + a consistent index keeps
-        // the merge valid across multi-mesh models.
-        gltf.scene.updateMatrixWorld(true);
-        const parts: THREE.BufferGeometry[] = [];
-        gltf.scene.traverse((o) => {
-          const m = o as THREE.Mesh;
-          if (!m.isMesh || !m.geometry) return;
-          const src = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
-          src.applyMatrix4(m.matrixWorld);
-          const g = new THREE.BufferGeometry();
-          g.setAttribute('position', src.getAttribute('position').clone());
-          parts.push(g);
-          src.dispose();
-        });
-        if (!parts.length) {
-          setFailed(true);
-          return;
-        }
-        const merged = parts.length === 1 ? parts[0] : (mergeGeometries(parts, false) ?? parts[0]);
+        if (disposed) return
+        gltf.scene.updateWorldMatrix(true, true)
+        gltf.scene.traverse((child) => {
+          const mesh = child as THREE.Mesh
+          if ((mesh as unknown as { isMesh?: boolean }).isMesh && mesh.geometry) {
+            const geo = mesh.geometry.clone()
+            geo.applyMatrix4(mesh.matrixWorld)
+            const edges = new THREE.EdgesGeometry(geo, quadThresholdDeg)
+            inner.add(new THREE.LineSegments(edges, lineMat))
+            geo.dispose()
+          }
+        })
 
-        // Normalise: recentre to origin, scale so the figure fills the frame.
-        merged.computeBoundingBox();
-        const bb = merged.boundingBox!;
-        const dim = new THREE.Vector3();
-        bb.getSize(dim);
-        const centre = new THREE.Vector3();
-        bb.getCenter(centre);
-        merged.translate(-centre.x, -centre.y, -centre.z);
-        const s = 2.6 / Math.max(dim.y, 1e-3);
-        merged.scale(s, s, s);
-
-        edges = new THREE.EdgesGeometry(merged, quadThresholdDeg);
-        lines = new THREE.LineSegments(edges, material);
-        scene.add(lines);
-
-        // Source geometry is spent — free it before we start drawing.
-        parts.forEach((p) => p !== merged && p.dispose());
-        merged.dispose();
-        gltf.scene.traverse((o) => {
-          const m = o as THREE.Mesh;
-          if (!m.isMesh) return;
-          m.geometry?.dispose();
-          const mat = m.material as THREE.Material & { map?: THREE.Texture };
-          mat?.map?.dispose?.();
-          (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => x?.dispose());
-        });
-
-        setReady(true);
-        start();
+        // Center the figure at the origin and scale it to a consistent height.
+        const box = new THREE.Box3().setFromObject(inner)
+        const size = new THREE.Vector3()
+        const center = new THREE.Vector3()
+        box.getSize(size)
+        box.getCenter(center)
+        inner.position.sub(center)
+        outer.scale.setScalar(3.4 / (size.y || 1))
       },
       undefined,
-      () => !disposed && setFailed(true), // model missing / decode error → 2D fallback
-    );
+      (err) => {
+        console.warn('BodyMesh: model failed to load', err)
+        setFailed(true)
+      },
+    )
+
+    const animate = () => {
+      raf = requestAnimationFrame(animate)
+      const t = clock.getElapsedTime()
+      // Breath: use the app value if given, else a gentle asymmetric pulse.
+      let b = breathRef.current
+      if (b == null) {
+        const cycle = 10
+        const p = (t % cycle) / cycle
+        b = p < 0.4 ? p / 0.4 : 1 - (p - 0.4) / 0.6
+      }
+      lineMat.opacity = 0.72 + 0.26 * b
+      controls.update()
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    const onResize = () => {
+      const w = mount.clientWidth || 1
+      const h = mount.clientHeight || 1
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    const ro = new ResizeObserver(onResize)
+    ro.observe(mount)
 
     return () => {
-      disposed = true;
-      stop();
-      document.removeEventListener('visibilitychange', onVis);
-      canvas.removeEventListener('webglcontextlost', onLost);
-      controls.dispose();
-      edges?.dispose();
-      material.dispose();
-      renderer.dispose();
-      renderer.forceContextLoss();
-    };
-  }, [w, h, color, quadThresholdDeg]);
+      disposed = true
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      controls.dispose()
+      inner.traverse((o) => {
+        const seg = o as THREE.LineSegments
+        if (seg.geometry) seg.geometry.dispose()
+      })
+      lineMat.dispose()
+      renderer.dispose()
+      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement)
+    }
+  }, [modelUrl, color, quadThresholdDeg, autoRotate])
 
-  if (failed) return <>{fallback}</>;
-  return (
-    <div className={className} style={{ position: 'relative', width: w, height: h }}>
-      <canvas
-        ref={canvasRef}
-        aria-hidden
-        style={{ width: w, height: h, display: 'block', touchAction: 'none', opacity: ready ? 1 : 0, transition: 'opacity 0.6s ease' }}
-      />
-      {!ready && <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>{fallback}</div>}
-    </div>
-  );
+  if (failed) return <>{fallback}</>
+  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
 }
