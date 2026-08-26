@@ -76,3 +76,20 @@ export function useDepth(): DepthGroup {
     () => group,
   );
 }
+
+// ── Pause control ───────────────────────────────────────────────────────────
+// Ref-counted so an interactive 3D screen can free the GPU by freezing the water
+// RAF while it's mounted; the water resumes only once every requester releases.
+let pauseCount = 0;
+const pauseListeners = new Set<() => void>();
+export function requestWaterPause() {
+  if (++pauseCount === 1) pauseListeners.forEach((l) => l());
+}
+export function releaseWaterPause() {
+  if (pauseCount > 0 && --pauseCount === 0) pauseListeners.forEach((l) => l());
+}
+export const isWaterPaused = () => pauseCount > 0;
+export function subscribeWaterPause(cb: () => void) {
+  pauseListeners.add(cb);
+  return () => void pauseListeners.delete(cb);
+}

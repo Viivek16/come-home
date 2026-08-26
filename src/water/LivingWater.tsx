@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { breathValue } from '../breath/useBreath';
 import { prefersReduced, useReducedMotion } from '../lib/motion';
-import { targetParams, stillWaterGradient, type WaterParams } from '../store/water';
+import { targetParams, stillWaterGradient, isWaterPaused, subscribeWaterPause, type WaterParams } from '../store/water';
 import { useTimeBand } from '../lib/timeBand';
 
 /**
@@ -190,11 +190,23 @@ export default function LivingWater() {
       if (document.hidden) {
         cancelAnimationFrame(raf);
         raf = 0;
-      } else if (!prefersReduced() && !raf) {
+      } else if (!prefersReduced() && !raf && !isWaterPaused()) {
         last = performance.now();
         raf = requestAnimationFrame(frame);
       }
     };
+    // Freeze the loop on the current frame while a screen requests the GPU
+    // (e.g. the interactive 3D figure); resume when every requester releases.
+    const applyPause = () => {
+      if (isWaterPaused()) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (!prefersReduced() && !document.hidden && !raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    const unsubPause = subscribeWaterPause(applyPause);
     const onLost = (e: Event) => {
       e.preventDefault();
       cancelAnimationFrame(raf);
@@ -203,10 +215,11 @@ export default function LivingWater() {
     canvas.addEventListener('webglcontextlost', onLost);
     document.addEventListener('visibilitychange', onVisibility);
 
-    if (!prefersReduced()) raf = requestAnimationFrame(frame); // else: single still frame only
+    if (!prefersReduced() && !isWaterPaused()) raf = requestAnimationFrame(frame); // else: single still frame only
 
     return () => {
       cancelAnimationFrame(raf);
+      unsubPause();
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', onVisibility);
       canvas.removeEventListener('webglcontextlost', onLost);
