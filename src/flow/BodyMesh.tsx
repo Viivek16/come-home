@@ -6,10 +6,14 @@
 // angle threshold, which drops the triangle diagonals and leaves the clean quad
 // grid, instead of a messy full triangle wireframe.
 //
-// Premium pass: ACES filmic tone mapping + depth fog roll the flat white blow-out
-// into a luminous, volumetric read (near lines bright gold, far lines recede into
-// the dark), and a single soft point of light travels down the body — the one
-// deliberate motion accent, paused under prefers-reduced-motion.
+// Premium pass: the lines use normal (not additive) blending so dense-topology
+// regions — face, hands, feet, groin — read at the same brightness as the rest
+// instead of glaring white where the quads bunch up. ACES filmic tone mapping +
+// depth fog give a luminous, volumetric read (near lines gold, far lines recede
+// into the dark). A single soft light then travels *inside* the body along its
+// anatomical channels — head → both arms → spine to the navel → both legs → and
+// back up to the head — the one deliberate motion accent, slow and eased, paused
+// under prefers-reduced-motion.
 //
 // Requires: npm i three
 // Model: put a clean quad-topology human GLB at public/models/human.glb.
@@ -36,6 +40,15 @@ function makeGlowTexture(): THREE.Texture {
   tex.needsUpdate = true
   return tex
 }
+
+// Position at u∈[0,1] along a polyline of Vector3 waypoints (even per-segment).
+function samplePath(pts: THREE.Vector3[], u: number, out: THREE.Vector3): THREE.Vector3 {
+  const n = pts.length - 1
+  const f = Math.max(0, Math.min(1, u)) * n
+  const i = Math.min(Math.floor(f), n - 1)
+  return out.copy(pts[i]).lerp(pts[i + 1], f - i)
+}
+const easeInOut = (u: number) => u * u * (3 - 2 * u) // smoothstep — eased on-screen movement
 
 type Props = {
   modelUrl?: string
@@ -90,8 +103,7 @@ export default function BodyMesh({
 
     const scene = new THREE.Scene()
     // Depth fog: the same near-black teal the water settles to, tuned so the far
-    // side of the figure dissolves into it. Gives volume and quietly removes the
-    // doubled additive stack from back-facing lines (what flattened it to white).
+    // side of the figure dissolves into it — volume without a heavier shader.
     scene.fog = new THREE.Fog(0x08201f, 5.2, 7.4)
     const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100)
     camera.position.set(0, 0, 6)
@@ -99,7 +111,6 @@ export default function BodyMesh({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75))
     renderer.setSize(width, height)
     renderer.setClearColor(0x000000, 0)
-    // Filmic highlight rolloff instead of a hard clip to white — the premium look.
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.05
@@ -120,15 +131,19 @@ export default function BodyMesh({
     outer.add(inner)
     scene.add(outer)
 
+    // Normal blending caps brightness at the line colour, so dense mesh regions
+    // stay as bright as sparse ones — no more white glare at the hands and face.
     const lineMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(color),
       transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.72,
       depthWrite: false,
+      blending: THREE.NormalBlending,
     })
 
-    // The travelling light. Populated once the model's bounds are known.
+    // The travelling light: a shared soft-glow material + two sprites (one for
+    // single-file stretches, both for the arm and leg branches). Additive so the
+    // light itself blooms, depthTest off so it reads as an inner glow.
     const glowTex = makeGlowTexture()
     const dotMat = new THREE.SpriteMaterial({
       map: glowTex,
@@ -138,11 +153,17 @@ export default function BodyMesh({
       depthTest: false,
       blending: THREE.AdditiveBlending,
     })
-    const dot = new THREE.Sprite(dotMat)
-    dot.visible = false
-    let headY = 0
-    let footY = 0
-    let dotSize = 0.5
+    const sprite0 = new THREE.Sprite(dotMat)
+    const sprite1 = new THREE.Sprite(dotMat)
+    sprite0.visible = false
+    sprite1.visible = false
+
+    // Animation state, filled once the model's bounds and anchors are known.
+    type PathKey = 'headThroat' | 'armL' | 'armR' | 'torso' | 'legL' | 'legR' | 'ret'
+    let paths: Record<PathKey, THREE.Vector3[]> | null = null
+    const chestPos = new THREE.Vector3()
+    const tmp = new THREE.Vector3()
+    const LOOP = 17 // seconds for a full circuit — slow and meditative
 
     const loader = new GLTFLoader()
     loader.load(
@@ -150,11 +171,13 @@ export default function BodyMesh({
       (gltf) => {
         if (disposed) return
         gltf.scene.updateWorldMatrix(true, true)
+        const verts: Float32Array[] = []
         gltf.scene.traverse((child) => {
           const mesh = child as THREE.Mesh
           if ((mesh as unknown as { isMesh?: boolean }).isMesh && mesh.geometry) {
             const geo = mesh.geometry.clone()
             geo.applyMatrix4(mesh.matrixWorld)
+            verts.push((geo.getAttribute('position').array as Float32Array).slice())
             const edges = new THREE.EdgesGeometry(geo, quadThresholdDeg)
             inner.add(new THREE.LineSegments(edges, lineMat))
             geo.dispose()
@@ -170,22 +193,72 @@ export default function BodyMesh({
         inner.position.sub(center)
         outer.scale.setScalar(3.4 / (size.y || 1))
 
-        // Seat the light on the body's vertical axis, just in front of the mesh,
-        // travelling between crown and feet (geometry space; inner carries it).
-        headY = box.max.y
-        footY = box.min.y
-        dotSize = size.y * 0.095
-        dot.scale.setScalar(dotSize)
-        dot.position.set(center.x, headY, box.max.z + size.z * 0.12)
-        dot.visible = true
-        inner.add(dot)
+        // Anatomical anchors (model space). Extremes come from real vertices so the
+        // light hugs the actual hands and feet; the spine points are body fractions.
+        const top = box.max.y
+        const bottom = box.min.y
+        const H = top - bottom
+        const W = size.x
+        const cx = center.x
+        const cz = center.z
+        const handL = new THREE.Vector3(Infinity, 0, 0)
+        const handR = new THREE.Vector3(-Infinity, 0, 0)
+        const footL = new THREE.Vector3(0, Infinity, 0)
+        const footR = new THREE.Vector3(0, Infinity, 0)
+        for (const arr of verts) {
+          for (let i = 0; i < arr.length; i += 3) {
+            const x = arr[i]
+            const y = arr[i + 1]
+            const z = arr[i + 2]
+            if (x < handL.x) handL.set(x, y, z)
+            if (x > handR.x) handR.set(x, y, z)
+            if (x < cx && y < footL.y) footL.set(x, y, z)
+            if (x >= cx && y < footR.y) footR.set(x, y, z)
+          }
+        }
+        const P = (fx: number, fy: number) => new THREE.Vector3(cx + fx * W, top - fy * H, cz)
+        const head = P(0, 0.03)
+        const throat = P(0, 0.15)
+        const chest = P(0, 0.25)
+        const navel = P(0, 0.42)
+        const pelvis = P(0, 0.52)
+        const shL = P(-0.1, 0.16)
+        const shR = P(0.1, 0.16)
+        const hipL = P(-0.07, 0.52)
+        const hipR = P(0.07, 0.52)
+        const mid = (a: THREE.Vector3, b: THREE.Vector3) => a.clone().lerp(b, 0.5)
+        paths = {
+          headThroat: [head, throat],
+          armL: [throat, shL, mid(shL, handL), handL],
+          armR: [throat, shR, mid(shR, handR), handR],
+          torso: [throat, chest, navel, pelvis],
+          legL: [pelvis, hipL, mid(hipL, footL), footL],
+          legR: [pelvis, hipR, mid(hipR, footR), footR],
+          ret: [pelvis, navel, chest, throat, head],
+        }
+        chestPos.copy(chest)
+        const dotSize = H * 0.06
+        sprite0.scale.setScalar(dotSize)
+        sprite1.scale.setScalar(dotSize)
+        inner.add(sprite0, sprite1)
       },
       undefined,
       (err) => {
+        if (disposed) return
         console.warn('BodyMesh: model failed to load', err)
         setFailed(true)
       },
     )
+
+    // Timeline of the light's journey (fractions of the loop). Single-file stretches
+    // move sprite0 only; the arm and leg stretches light both sprites, left + right.
+    const legs: { a: number; b: number; p0: PathKey; p1: PathKey | null }[] = [
+      { a: 0.0, b: 0.12, p0: 'headThroat', p1: null }, // head → throat
+      { a: 0.12, b: 0.34, p0: 'armL', p1: 'armR' }, //     both arms
+      { a: 0.34, b: 0.52, p0: 'torso', p1: null }, //      throat → navel → pelvis
+      { a: 0.52, b: 0.74, p0: 'legL', p1: 'legR' }, //     both legs
+      { a: 0.74, b: 1.0, p0: 'ret', p1: null }, //         back up to the head
+    ]
 
     const animate = () => {
       raf = requestAnimationFrame(animate)
@@ -197,23 +270,33 @@ export default function BodyMesh({
         const p = (t % cycle) / cycle
         b = p < 0.4 ? p / 0.4 : 1 - (p - 0.4) / 0.6
       }
-      lineMat.opacity = 0.5 + 0.2 * b
+      lineMat.opacity = 0.62 + 0.16 * b
 
-      // Travelling light: a smooth crown↔feet sweep, easing at each turn. Held
-      // still and dim under reduced-motion so it never becomes a distraction.
-      if (dot.visible) {
+      if (paths) {
         if (reduceMotion) {
-          dot.position.y = headY + (footY - headY) * 0.32
+          // No travel under reduced motion — a single, steady light at the chest.
+          sprite0.position.copy(chestPos)
+          sprite0.visible = true
+          sprite1.visible = false
           dotMat.opacity = 0.5
         } else {
-          const period = 6.5
-          const tt = (t % period) / period
-          const tri = tt < 0.5 ? tt * 2 : 2 - tt * 2 // 0→1→0 ping-pong
-          const e = tri * tri * (3 - 2 * tri) // smoothstep ease at the turns
-          dot.position.y = headY + (footY - headY) * e
-          const pulse = 0.85 + 0.15 * Math.sin(t * 3)
-          dotMat.opacity = 0.95 * pulse
-          dot.scale.setScalar(dotSize * (0.92 + 0.12 * Math.sin(t * 3)))
+          const gp = (t / LOOP) % 1
+          let seg = legs[legs.length - 1]
+          for (const s of legs) if (gp >= s.a && gp < s.b) { seg = s; break }
+          const u = (gp - seg.a) / (seg.b - seg.a)
+          const e = easeInOut(u)
+          const env = Math.max(0, Math.min(1, u / 0.18, (1 - u) / 0.18)) // fade in/out, never a pop
+          dotMat.opacity = 0.9 * env * (0.9 + 0.1 * Math.sin(t * 2))
+          samplePath(paths[seg.p0], e, tmp)
+          sprite0.position.copy(tmp)
+          sprite0.visible = true
+          if (seg.p1) {
+            samplePath(paths[seg.p1], e, tmp)
+            sprite1.position.copy(tmp)
+            sprite1.visible = true
+          } else {
+            sprite1.visible = false
+          }
         }
       }
 
