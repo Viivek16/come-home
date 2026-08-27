@@ -6,25 +6,27 @@
 // angle threshold, which drops the triangle diagonals and leaves the clean quad
 // grid, instead of a messy full triangle wireframe.
 //
-// Premium pass: the lines use normal (not additive) blending so dense-topology
-// regions — face, hands, feet, groin — read at the same brightness as the rest
-// instead of glaring white where the quads bunch up. ACES filmic tone mapping +
-// depth fog give a luminous, volumetric read (near lines gold, far lines recede
-// into the dark). A single soft light then travels *inside* the body along its
-// anatomical channels — head → both arms → spine to the navel → both legs → and
-// back up to the head — the one deliberate motion accent, slow and eased, paused
-// under prefers-reduced-motion.
+// The lines use normal (not additive) blending so dense-topology regions read at
+// the same brightness as the rest instead of glaring white. ACES filmic tone
+// mapping + depth fog give a luminous, volumetric read. The figure breathes on
+// the shared clock.
+//
+// `region` drives the accent:
+//   'flow'  — cancer / whole-body: one light descends from the head, branching to
+//             both hands and down the spine at once, then to both legs, gathering
+//             back up to the head on a loop (all dots synced, no gaps).
+//   other   — a body area (brain, lungs, belly, pelvis, kidneys, joints, aura):
+//             soft light rests on that region and breathes, emphasising it.
 //
 // Requires: npm i three
 // Model: put a clean quad-topology human GLB at public/models/human.glb.
-// See the accompanying prompt for CC0 sourcing options.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-// Soft round light for the travelling point: hot white core → warm gold → clear.
+// Soft round light: hot white core → warm gold → clear.
 function makeGlowTexture(): THREE.Texture {
   const c = document.createElement('canvas')
   c.width = c.height = 128
@@ -48,30 +50,28 @@ function samplePath(pts: THREE.Vector3[], u: number, out: THREE.Vector3): THREE.
   const i = Math.min(Math.floor(f), n - 1)
   return out.copy(pts[i]).lerp(pts[i + 1], f - i)
 }
-const easeInOut = (u: number) => u * u * (3 - 2 * u) // smoothstep — eased on-screen movement
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x))
+const smooth = (x: number) => { const t = clamp01(x); return t * t * (3 - 2 * t) } // smoothstep
 
 type Props = {
   modelUrl?: string
-  // Line colour. App accent gold by default. Try '#5FE3D8' for the cyan look.
-  color?: string
-  // Degrees. 1 gives the cleanest quad grid. Raise to 10 to 20 if a model shows
-  // too many stray edges.
+  color?: string // line colour; app gold by default
   quadThresholdDeg?: number
-  // Optional external breath value 0..1 from the app breath clock. If omitted the
-  // component runs its own gentle ~4s in, 6s out pulse.
-  breath?: number
+  breath?: number // 0..1 from the app breath clock; own gentle pulse if omitted
+  region?: string // 'flow' | 'brain' | 'lungs' | 'belly' | 'pelvis' | 'kidneys' | 'joints' | 'aura'
   autoRotate?: boolean
-  // Rendered if WebGL is unavailable or the model fails to load. Pass the existing
-  // 2D body-of-light here so the screen never blanks.
-  fallback?: ReactNode
+  fallback?: ReactNode // rendered if WebGL / the model is unavailable
   className?: string
 }
+
+const POOL = 6 // sprites reused for the flow dots (5) or the region highlight (≤6)
 
 export default function BodyMesh({
   modelUrl = '/models/human.glb',
   color = '#E3C08D',
   quadThresholdDeg = 1,
   breath,
+  region = 'flow',
   autoRotate = false,
   fallback = null,
   className,
@@ -102,8 +102,6 @@ export default function BodyMesh({
     const height = mount.clientHeight || 1
 
     const scene = new THREE.Scene()
-    // Depth fog: the same near-black teal the water settles to, tuned so the far
-    // side of the figure dissolves into it — volume without a heavier shader.
     scene.fog = new THREE.Fog(0x08201f, 5.2, 7.4)
     const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100)
     camera.position.set(0, 0, 6)
@@ -130,9 +128,9 @@ export default function BodyMesh({
     const outer = new THREE.Group()
     outer.add(inner)
     scene.add(outer)
+    let baseScale = 1
 
-    // Normal blending caps brightness at the line colour, so dense mesh regions
-    // stay as bright as sparse ones — no more white glare at the hands and face.
+    // Normal blending → dense mesh regions stay as bright as sparse ones.
     const lineMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(color),
       transparent: true,
@@ -141,29 +139,26 @@ export default function BodyMesh({
       blending: THREE.NormalBlending,
     })
 
-    // The travelling light: a shared soft-glow material + two sprites (one for
-    // single-file stretches, both for the arm and leg branches). Additive so the
-    // light itself blooms, depthTest off so it reads as an inner glow.
+    // Shared soft-glow texture + a small pool of additive sprites (depthTest off
+    // so the light reads as an inner glow).
     const glowTex = makeGlowTexture()
-    const dotMat = new THREE.SpriteMaterial({
-      map: glowTex,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      depthTest: false,
-      blending: THREE.AdditiveBlending,
-    })
-    const sprite0 = new THREE.Sprite(dotMat)
-    const sprite1 = new THREE.Sprite(dotMat)
-    sprite0.visible = false
-    sprite1.visible = false
+    const mats: THREE.SpriteMaterial[] = []
+    const dots: THREE.Sprite[] = []
+    for (let i = 0; i < POOL; i++) {
+      const m = new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })
+      const s = new THREE.Sprite(m)
+      s.visible = false
+      mats.push(m)
+      dots.push(s)
+    }
 
-    // Animation state, filled once the model's bounds and anchors are known.
-    type PathKey = 'headThroat' | 'armL' | 'armR' | 'torso' | 'legL' | 'legR' | 'ret'
-    let paths: Record<PathKey, THREE.Vector3[]> | null = null
-    const chestPos = new THREE.Vector3()
+    // Filled once the model's bounds and anatomical anchors are known.
+    type Flow = { center: THREE.Vector3[]; armL: THREE.Vector3[]; armR: THREE.Vector3[]; legL: THREE.Vector3[]; legR: THREE.Vector3[] }
+    let flow: Flow | null = null
+    let highlight: { points: THREE.Vector3[]; size: number } | null = null
+    const isFlow = region === 'flow'
     const tmp = new THREE.Vector3()
-    const LOOP = 17 // seconds for a full circuit — slow and meditative
+    const PERIOD = 12 // seconds for a full descend + gather cycle — slow, meditative
 
     const loader = new GLTFLoader()
     loader.load(
@@ -184,63 +179,66 @@ export default function BodyMesh({
           }
         })
 
-        // Center the figure at the origin and scale it to a consistent height.
         const box = new THREE.Box3().setFromObject(inner)
         const size = new THREE.Vector3()
         const center = new THREE.Vector3()
         box.getSize(size)
         box.getCenter(center)
         inner.position.sub(center)
-        outer.scale.setScalar(3.4 / (size.y || 1))
+        baseScale = 3.4 / (size.y || 1)
+        outer.scale.setScalar(baseScale)
 
-        // Anatomical anchors (model space). Extremes come from real vertices so the
-        // light hugs the actual hands and feet; the spine points are body fractions.
         const top = box.max.y
-        const bottom = box.min.y
-        const H = top - bottom
+        const H = size.y
         const W = size.x
         const cx = center.x
         const cz = center.z
+        // Real hands from the mesh so the arm light reaches the actual fingertips.
         const handL = new THREE.Vector3(Infinity, 0, 0)
         const handR = new THREE.Vector3(-Infinity, 0, 0)
-        const footL = new THREE.Vector3(0, Infinity, 0)
-        const footR = new THREE.Vector3(0, Infinity, 0)
         for (const arr of verts) {
           for (let i = 0; i < arr.length; i += 3) {
             const x = arr[i]
-            const y = arr[i + 1]
-            const z = arr[i + 2]
-            if (x < handL.x) handL.set(x, y, z)
-            if (x > handR.x) handR.set(x, y, z)
-            if (x < cx && y < footL.y) footL.set(x, y, z)
-            if (x >= cx && y < footR.y) footR.set(x, y, z)
+            if (x < handL.x) handL.set(x, arr[i + 1], arr[i + 2])
+            if (x > handR.x) handR.set(x, arr[i + 1], arr[i + 2])
           }
         }
+        // Spine + limb anchors as body fractions, all at mid-depth (cz) so the
+        // light stays *inside* the volume — the legs no longer spill outside.
         const P = (fx: number, fy: number) => new THREE.Vector3(cx + fx * W, top - fy * H, cz)
-        const head = P(0, 0.03)
+        const head = P(0, 0.05)
         const throat = P(0, 0.15)
-        const chest = P(0, 0.25)
+        const chest = P(0, 0.26)
         const navel = P(0, 0.42)
         const pelvis = P(0, 0.52)
-        const shL = P(-0.1, 0.16)
-        const shR = P(0.1, 0.16)
-        const hipL = P(-0.07, 0.52)
-        const hipR = P(0.07, 0.52)
-        const mid = (a: THREE.Vector3, b: THREE.Vector3) => a.clone().lerp(b, 0.5)
-        paths = {
-          headThroat: [head, throat],
-          armL: [throat, shL, mid(shL, handL), handL],
-          armR: [throat, shR, mid(shR, handR), handR],
-          torso: [throat, chest, navel, pelvis],
-          legL: [pelvis, hipL, mid(hipL, footL), footL],
-          legR: [pelvis, hipR, mid(hipR, footR), footR],
-          ret: [pelvis, navel, chest, throat, head],
+        const shL = P(-0.1, 0.16), shR = P(0.1, 0.16)
+        const elbowL = shL.clone().lerp(handL, 0.5), elbowR = shR.clone().lerp(handR, 0.5)
+        const kneeL = P(-0.1, 0.72), kneeR = P(0.1, 0.72)
+        const ankleL = P(-0.11, 0.92), ankleR = P(0.11, 0.92)
+        const lungL = P(-0.1, 0.26), lungR = P(0.1, 0.26)
+        const kidneyL = P(-0.13, 0.45), kidneyR = P(0.13, 0.45)
+
+        flow = {
+          center: [head, throat, chest, navel, pelvis],
+          armL: [throat, shL, elbowL, handL],
+          armR: [throat, shR, elbowR, handR],
+          legL: [pelvis, kneeL, ankleL],
+          legR: [pelvis, kneeR, ankleR],
         }
-        chestPos.copy(chest)
-        const dotSize = H * 0.06
-        sprite0.scale.setScalar(dotSize)
-        sprite1.scale.setScalar(dotSize)
-        inner.add(sprite0, sprite1)
+        const regions: Record<string, { points: THREE.Vector3[]; size: number }> = {
+          brain: { points: [head], size: H * 0.15 },
+          lungs: { points: [lungL, lungR], size: H * 0.12 },
+          belly: { points: [navel], size: H * 0.14 },
+          pelvis: { points: [pelvis], size: H * 0.12 },
+          kidneys: { points: [kidneyL, kidneyR], size: H * 0.1 },
+          joints: { points: [elbowL, elbowR, handL, handR, kneeL, kneeR], size: H * 0.06 },
+          aura: { points: [chest], size: H * 0.34 },
+        }
+        if (!isFlow) highlight = regions[region] ?? regions.aura
+
+        const flowSize = H * 0.055
+        for (const s of dots) s.scale.setScalar(flowSize)
+        inner.add(...dots)
       },
       undefined,
       (err) => {
@@ -250,53 +248,55 @@ export default function BodyMesh({
       },
     )
 
-    // Timeline of the light's journey (fractions of the loop). Single-file stretches
-    // move sprite0 only; the arm and leg stretches light both sprites, left + right.
-    const legs: { a: number; b: number; p0: PathKey; p1: PathKey | null }[] = [
-      { a: 0.0, b: 0.12, p0: 'headThroat', p1: null }, // head → throat
-      { a: 0.12, b: 0.34, p0: 'armL', p1: 'armR' }, //     both arms
-      { a: 0.34, b: 0.52, p0: 'torso', p1: null }, //      throat → navel → pelvis
-      { a: 0.52, b: 0.74, p0: 'legL', p1: 'legR' }, //     both legs
-      { a: 0.74, b: 1.0, p0: 'ret', p1: null }, //         back up to the head
-    ]
+    const place = (i: number, p: THREE.Vector3, op: number, sizeAbs?: number) => {
+      const s = dots[i]
+      s.position.copy(p)
+      s.visible = op > 0.001
+      mats[i].opacity = op
+      if (sizeAbs) s.scale.setScalar(sizeAbs)
+    }
 
     const animate = () => {
       raf = requestAnimationFrame(animate)
       const t = clock.getElapsedTime()
-      // Breath: use the app value if given, else a gentle asymmetric pulse.
       let b = breathRef.current
       if (b == null) {
-        const cycle = 10
-        const p = (t % cycle) / cycle
+        const cyc = 10
+        const p = (t % cyc) / cyc
         b = p < 0.4 ? p / 0.4 : 1 - (p - 0.4) / 0.6
       }
       lineMat.opacity = 0.62 + 0.16 * b
+      outer.scale.setScalar(baseScale * (1 + 0.012 * b)) // whole figure breathes — quietly alive
 
-      if (paths) {
+      if (isFlow && flow) {
         if (reduceMotion) {
-          // No travel under reduced motion — a single, steady light at the chest.
-          sprite0.position.copy(chestPos)
-          sprite0.visible = true
-          sprite1.visible = false
-          dotMat.opacity = 0.5
+          place(0, flow.center[2], 0.55) // hold one light at the chest
+          for (let i = 1; i < POOL; i++) dots[i].visible = false
         } else {
-          const gp = (t / LOOP) % 1
-          let seg = legs[legs.length - 1]
-          for (const s of legs) if (gp >= s.a && gp < s.b) { seg = s; break }
-          const u = (gp - seg.a) / (seg.b - seg.a)
-          const e = easeInOut(u)
-          const env = Math.max(0, Math.min(1, u / 0.18, (1 - u) / 0.18)) // fade in/out, never a pop
-          dotMat.opacity = 0.9 * env * (0.9 + 0.1 * Math.sin(t * 2))
-          samplePath(paths[seg.p0], e, tmp)
-          sprite0.position.copy(tmp)
-          sprite0.visible = true
-          if (seg.p1) {
-            samplePath(paths[seg.p1], e, tmp)
-            sprite1.position.copy(tmp)
-            sprite1.visible = true
-          } else {
-            sprite1.visible = false
-          }
+          // One synchronised wave: w 0→1 spreads (head → arms + spine → legs),
+          // 1→0 gathers back to the head. Continuous — no phase gaps.
+          const tt = (t / PERIOD) % 1
+          const w = smooth(tt < 0.5 ? tt * 2 : 2 - tt * 2)
+          const pulse = 0.9 + 0.1 * Math.sin(t * 2)
+          const cp = clamp01(w / 0.55)
+          const ap = clamp01((w - 0.06) / 0.5)
+          const lp = clamp01((w - 0.5) / 0.5)
+          place(0, samplePath(flow.center, cp, tmp).clone(), 0.9 * smooth(w / 0.04) * pulse)
+          const aop = 0.9 * smooth(ap / 0.16) * pulse
+          place(1, samplePath(flow.armL, ap, tmp).clone(), aop)
+          place(2, samplePath(flow.armR, ap, tmp).clone(), aop)
+          const lop = 0.9 * smooth(lp / 0.16) * pulse
+          place(3, samplePath(flow.legL, lp, tmp).clone(), lop)
+          place(4, samplePath(flow.legR, lp, tmp).clone(), lop)
+          dots[5].visible = false
+        }
+      } else if (highlight) {
+        // Region emphasis: soft light rests on the area and breathes with it.
+        const op = (reduceMotion ? 0.55 : 0.5 + 0.32 * b)
+        const scl = highlight.size * (reduceMotion ? 1 : 0.94 + 0.1 * b)
+        for (let i = 0; i < POOL; i++) {
+          if (i < highlight.points.length) place(i, highlight.points[i], op, scl)
+          else dots[i].visible = false
         }
       }
 
@@ -325,12 +325,12 @@ export default function BodyMesh({
         if (seg.geometry) seg.geometry.dispose()
       })
       lineMat.dispose()
-      dotMat.dispose()
+      for (const m of mats) m.dispose()
       glowTex.dispose()
       renderer.dispose()
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement)
     }
-  }, [modelUrl, color, quadThresholdDeg, autoRotate])
+  }, [modelUrl, color, quadThresholdDeg, autoRotate, region])
 
   if (failed) return <>{fallback}</>
   return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%' }} />
