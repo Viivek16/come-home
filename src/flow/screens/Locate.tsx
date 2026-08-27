@@ -21,10 +21,10 @@ const FIGURE_COLOR = '#E3C08D';
 // we rest attention, they never diagnose. 'flow' runs the travelling light.
 const REGION: Record<string, { region: string; label: string }> = {
   cancer: { region: 'flow', label: 'Whole body' },
-  dialysis: { region: 'kidneys', label: 'Lower back' },
+  dialysis: { region: 'flow', label: 'Whole body' },
+  skin: { region: 'flow', label: 'Whole body' },
   digestion: { region: 'belly', label: 'The belly' },
-  breathing: { region: 'lungs', label: 'Chest · lungs' },
-  skin: { region: 'aura', label: 'Whole body' },
+  breathing: { region: 'chest', label: 'The chest' },
   sexual: { region: 'pelvis', label: 'Low body' },
   joint: { region: 'joints', label: 'The joints' },
   psychological: { region: 'brain', label: 'The mind' },

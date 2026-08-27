@@ -2,31 +2,27 @@
 // Interactive glowing wireframe human for the Support "locate" screen.
 // Loads a real human GLB, renders its quad wireframe as glowing lines on a
 // transparent canvas over the water background, and lets the user rotate and
-// zoom it freely. Matches the reference look by using EdgesGeometry with a low
-// angle threshold, which drops the triangle diagonals and leaves the clean quad
-// grid, instead of a messy full triangle wireframe.
+// zoom it freely. EdgesGeometry with a low angle threshold drops the triangle
+// diagonals and leaves the clean quad grid; normal (not additive) blending keeps
+// dense-topology regions from glaring; ACES filmic tone mapping + depth fog give
+// a luminous, volumetric read. The figure breathes on the shared clock.
 //
-// The lines use normal (not additive) blending so dense-topology regions read at
-// the same brightness as the rest instead of glaring white. ACES filmic tone
-// mapping + depth fog give a luminous, volumetric read. The figure breathes on
-// the shared clock.
+// Every light is placed on a point SAMPLED from the mesh — the centroid of the
+// local body volume — so it always sits inside the figure and stays there when
+// rotated. `region` drives the accent:
+//   'flow'  — one light descends the spine while both arms and (later) both legs
+//             branch from it in sync, then gathers back up to the head, looping.
+//   area    — a soft patch of light rests on that region (chest / belly / pelvis
+//             / brain) and breathes with it.
+//   'joints'— small lights sit on the elbows, wrists, knees and ankles.
 //
-// `region` drives the accent:
-//   'flow'  — cancer / whole-body: one light descends from the head, branching to
-//             both hands and down the spine at once, then to both legs, gathering
-//             back up to the head on a loop (all dots synced, no gaps).
-//   other   — a body area (brain, lungs, belly, pelvis, kidneys, joints, aura):
-//             soft light rests on that region and breathes, emphasising it.
-//
-// Requires: npm i three
-// Model: put a clean quad-topology human GLB at public/models/human.glb.
+// Requires: npm i three. Model: public/models/human.glb.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-// Soft round light: hot white core → warm gold → clear.
 function makeGlowTexture(): THREE.Texture {
   const c = document.createElement('canvas')
   c.width = c.height = 128
@@ -43,7 +39,6 @@ function makeGlowTexture(): THREE.Texture {
   return tex
 }
 
-// Position at u∈[0,1] along a polyline of Vector3 waypoints (even per-segment).
 function samplePath(pts: THREE.Vector3[], u: number, out: THREE.Vector3): THREE.Vector3 {
   const n = pts.length - 1
   const f = Math.max(0, Math.min(1, u)) * n
@@ -51,20 +46,20 @@ function samplePath(pts: THREE.Vector3[], u: number, out: THREE.Vector3): THREE.
   return out.copy(pts[i]).lerp(pts[i + 1], f - i)
 }
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x))
-const smooth = (x: number) => { const t = clamp01(x); return t * t * (3 - 2 * t) } // smoothstep
+const smooth = (x: number) => { const t = clamp01(x); return t * t * (3 - 2 * t) }
 
 type Props = {
   modelUrl?: string
-  color?: string // line colour; app gold by default
+  color?: string
   quadThresholdDeg?: number
-  breath?: number // 0..1 from the app breath clock; own gentle pulse if omitted
-  region?: string // 'flow' | 'brain' | 'lungs' | 'belly' | 'pelvis' | 'kidneys' | 'joints' | 'aura'
+  breath?: number
+  region?: string // 'flow' | 'brain' | 'chest' | 'belly' | 'pelvis' | 'joints'
   autoRotate?: boolean
-  fallback?: ReactNode // rendered if WebGL / the model is unavailable
+  fallback?: ReactNode
   className?: string
 }
 
-const POOL = 6 // sprites reused for the flow dots (5) or the region highlight (≤6)
+const POOL = 8 // enough for the 5 flow dots or the 8 joint lights
 
 export default function BodyMesh({
   modelUrl = '/models/human.glb',
@@ -130,7 +125,6 @@ export default function BodyMesh({
     scene.add(outer)
     let baseScale = 1
 
-    // Normal blending → dense mesh regions stay as bright as sparse ones.
     const lineMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(color),
       transparent: true,
@@ -139,8 +133,6 @@ export default function BodyMesh({
       blending: THREE.NormalBlending,
     })
 
-    // Shared soft-glow texture + a small pool of additive sprites (depthTest off
-    // so the light reads as an inner glow).
     const glowTex = makeGlowTexture()
     const mats: THREE.SpriteMaterial[] = []
     const dots: THREE.Sprite[] = []
@@ -152,13 +144,12 @@ export default function BodyMesh({
       dots.push(s)
     }
 
-    // Filled once the model's bounds and anatomical anchors are known.
     type Flow = { center: THREE.Vector3[]; armL: THREE.Vector3[]; armR: THREE.Vector3[]; legL: THREE.Vector3[]; legR: THREE.Vector3[] }
     let flow: Flow | null = null
-    let highlight: { points: THREE.Vector3[]; size: number } | null = null
+    let highlight: { points: THREE.Vector3[]; size: number; op: number } | null = null
     const isFlow = region === 'flow'
     const tmp = new THREE.Vector3()
-    const PERIOD = 12 // seconds for a full descend + gather cycle — slow, meditative
+    const PERIOD = 12
 
     const loader = new GLTFLoader()
     loader.load(
@@ -188,53 +179,78 @@ export default function BodyMesh({
         baseScale = 3.4 / (size.y || 1)
         outer.scale.setScalar(baseScale)
 
-        const top = box.max.y
-        const H = size.y
-        const W = size.x
-        const cx = center.x
-        const cz = center.z
-        // Real hands from the mesh so the arm light reaches the actual fingertips.
-        const handL = new THREE.Vector3(Infinity, 0, 0)
-        const handR = new THREE.Vector3(-Infinity, 0, 0)
-        for (const arr of verts) {
-          for (let i = 0; i < arr.length; i += 3) {
-            const x = arr[i]
-            if (x < handL.x) handL.set(x, arr[i + 1], arr[i + 2])
-            if (x > handR.x) handR.set(x, arr[i + 1], arr[i + 2])
-          }
+        const top = box.max.y, bottom = box.min.y
+        const H = size.y, W = size.x, cx = center.x
+        const yAt = (f: number) => top - f * H
+        let hxL = Infinity, hxR = -Infinity
+        for (const arr of verts) for (let i = 0; i < arr.length; i += 3) { const x = arr[i]; if (x < hxL) hxL = x; if (x > hxR) hxR = x }
+
+        type Pred = (x: number, y: number, z: number) => boolean
+        // Centroid of every vertex in a region — always inside the body volume.
+        const centroid = (pred: Pred): THREE.Vector3 => {
+          let sx = 0, sy = 0, sz = 0, c = 0
+          for (const arr of verts) for (let i = 0; i < arr.length; i += 3) { const x = arr[i], y = arr[i + 1], z = arr[i + 2]; if (pred(x, y, z)) { sx += x; sy += y; sz += z; c++ } }
+          return c ? new THREE.Vector3(sx / c, sy / c, sz / c) : center.clone()
         }
-        // Spine + limb anchors as body fractions, all at mid-depth (cz) so the
-        // light stays *inside* the volume — the legs no longer spill outside.
-        const P = (fx: number, fy: number) => new THREE.Vector3(cx + fx * W, top - fy * H, cz)
-        const head = P(0, 0.05)
-        const throat = P(0, 0.15)
-        const chest = P(0, 0.26)
-        const navel = P(0, 0.42)
-        const pelvis = P(0, 0.52)
-        const shL = P(-0.1, 0.16), shR = P(0.1, 0.16)
-        const elbowL = shL.clone().lerp(handL, 0.5), elbowR = shR.clone().lerp(handR, 0.5)
-        const kneeL = P(-0.1, 0.72), kneeR = P(0.1, 0.72)
-        const ankleL = P(-0.11, 0.92), ankleR = P(0.11, 0.92)
-        const lungL = P(-0.1, 0.26), lungR = P(0.1, 0.26)
-        const kidneyL = P(-0.13, 0.45), kidneyR = P(0.13, 0.45)
+        // A limb centre-line: bin vertices along an axis, take each bin's centroid.
+        const centerline = (pred: Pred, axis: 'x' | 'y', n: number, lo: number, hi: number, desc: boolean): THREE.Vector3[] => {
+          const sx = new Float64Array(n), sy = new Float64Array(n), sz = new Float64Array(n), ct = new Uint32Array(n)
+          for (const arr of verts) for (let i = 0; i < arr.length; i += 3) {
+            const x = arr[i], y = arr[i + 1], z = arr[i + 2]
+            if (!pred(x, y, z)) continue
+            const a = axis === 'y' ? y : x
+            let bi = Math.floor(((a - lo) / (hi - lo)) * n); if (bi < 0) bi = 0; if (bi >= n) bi = n - 1
+            sx[bi] += x; sy[bi] += y; sz[bi] += z; ct[bi]++
+          }
+          const pts: THREE.Vector3[] = []
+          for (let i = 0; i < n; i++) if (ct[i] > 0) pts.push(new THREE.Vector3(sx[i] / ct[i], sy[i] / ct[i], sz[i] / ct[i]))
+          pts.sort((a, b) => (axis === 'y' ? (desc ? b.y - a.y : a.y - b.y) : (desc ? b.x - a.x : a.x - b.x)))
+          return pts
+        }
+
+        const pelvisY = yAt(0.52)
+        const armX = cx - 0.16 * W, armXr = cx + 0.16 * W
+        const spine = centerline((x, y) => Math.abs(x - cx) < 0.13 * W && y >= pelvisY, 'y', 6, pelvisY, top, true)
+        const legLw = centerline((x, y) => x < cx && y < yAt(0.53), 'y', 5, bottom, yAt(0.53), true)
+        const legRw = centerline((x, y) => x > cx && y < yAt(0.53), 'y', 5, bottom, yAt(0.53), true)
+        // Upper-body only, or the splayed feet (which reach past armX in x) would
+        // pull the arm centre-line down toward the floor.
+        const armLw = centerline((x, y) => x < armX && y > yAt(0.48), 'x', 5, hxL, armX, true)
+        const armRw = centerline((x, y) => x > armXr && y > yAt(0.48), 'x', 5, armXr, hxR, false)
+        const head = spine[0] ?? centroid((_x, y) => y > yAt(0.11))
+        const pelvis = spine[spine.length - 1] ?? new THREE.Vector3(cx, pelvisY, center.z)
+        // Arms branch from a point on the spine at shoulder height (never above it).
+        const armLconn = new THREE.Vector3(cx, (armLw[0] ?? spine[1] ?? head).y, center.z)
+        const armRconn = new THREE.Vector3(cx, (armRw[0] ?? spine[1] ?? head).y, center.z)
 
         flow = {
-          center: [head, throat, chest, navel, pelvis],
-          armL: [throat, shL, elbowL, handL],
-          armR: [throat, shR, elbowR, handR],
-          legL: [pelvis, kneeL, ankleL],
-          legR: [pelvis, kneeR, ankleR],
+          center: spine.length > 1 ? spine : [head, pelvis],
+          armL: [armLconn, ...armLw],
+          armR: [armRconn, ...armRw],
+          legL: [pelvis, ...legLw],
+          legR: [pelvis, ...legRw],
         }
-        const regions: Record<string, { points: THREE.Vector3[]; size: number }> = {
-          brain: { points: [head], size: H * 0.15 },
-          lungs: { points: [lungL, lungR], size: H * 0.12 },
-          belly: { points: [navel], size: H * 0.14 },
-          pelvis: { points: [pelvis], size: H * 0.12 },
-          kidneys: { points: [kidneyL, kidneyR], size: H * 0.1 },
-          joints: { points: [elbowL, elbowR, handL, handR, kneeL, kneeR], size: H * 0.06 },
-          aura: { points: [chest], size: H * 0.34 },
+
+        // Region patches / joint points, all from mesh-sampled interior positions.
+        const chestC = centroid((x, y) => Math.abs(x - cx) < 0.16 * W && y < yAt(0.19) && y > yAt(0.31))
+        const bellyC = centroid((x, y) => Math.abs(x - cx) < 0.16 * W && y < yAt(0.35) && y > yAt(0.48))
+        const pelvisC = centroid((x, y) => Math.abs(x - cx) < 0.16 * W && y < yAt(0.48) && y > yAt(0.58))
+        const brainC = centroid((_x, y) => y > yAt(0.1))
+        const at = (p: THREE.Vector3[], u: number) => samplePath(p, u, new THREE.Vector3()).clone()
+        const joints = [
+          at(flow.armL, 0.55), at(flow.armR, 0.55), // elbows
+          at(flow.armL, 0.9), at(flow.armR, 0.9), //   wrists
+          at(flow.legL, 0.5), at(flow.legR, 0.5), //   knees
+          at(flow.legL, 0.88), at(flow.legR, 0.88), // ankles
+        ]
+        const regions: Record<string, { points: THREE.Vector3[]; size: number; op: number }> = {
+          brain: { points: [brainC], size: H * 0.15, op: 0.6 },
+          chest: { points: [chestC], size: H * 0.2, op: 0.42 },
+          belly: { points: [bellyC], size: H * 0.19, op: 0.42 },
+          pelvis: { points: [pelvisC], size: H * 0.17, op: 0.46 },
+          joints: { points: joints, size: H * 0.055, op: 0.8 },
         }
-        if (!isFlow) highlight = regions[region] ?? regions.aura
+        if (!isFlow) highlight = regions[region] ?? regions.chest
 
         const flowSize = H * 0.055
         for (const s of dots) s.scale.setScalar(flowSize)
@@ -266,15 +282,13 @@ export default function BodyMesh({
         b = p < 0.4 ? p / 0.4 : 1 - (p - 0.4) / 0.6
       }
       lineMat.opacity = 0.62 + 0.16 * b
-      outer.scale.setScalar(baseScale * (1 + 0.012 * b)) // whole figure breathes — quietly alive
+      outer.scale.setScalar(baseScale * (1 + 0.012 * b))
 
       if (isFlow && flow) {
         if (reduceMotion) {
-          place(0, flow.center[2], 0.55) // hold one light at the chest
+          place(0, flow.center[Math.min(2, flow.center.length - 1)], 0.55)
           for (let i = 1; i < POOL; i++) dots[i].visible = false
         } else {
-          // One synchronised wave: w 0→1 spreads (head → arms + spine → legs),
-          // 1→0 gathers back to the head. Continuous — no phase gaps.
           const tt = (t / PERIOD) % 1
           const w = smooth(tt < 0.5 ? tt * 2 : 2 - tt * 2)
           const pulse = 0.9 + 0.1 * Math.sin(t * 2)
@@ -288,11 +302,10 @@ export default function BodyMesh({
           const lop = 0.9 * smooth(lp / 0.16) * pulse
           place(3, samplePath(flow.legL, lp, tmp).clone(), lop)
           place(4, samplePath(flow.legR, lp, tmp).clone(), lop)
-          dots[5].visible = false
+          for (let i = 5; i < POOL; i++) dots[i].visible = false
         }
       } else if (highlight) {
-        // Region emphasis: soft light rests on the area and breathes with it.
-        const op = (reduceMotion ? 0.55 : 0.5 + 0.32 * b)
+        const op = highlight.op * (reduceMotion ? 1 : 0.8 + 0.45 * b)
         const scl = highlight.size * (reduceMotion ? 1 : 0.94 + 0.1 * b)
         for (let i = 0; i < POOL; i++) {
           if (i < highlight.points.length) place(i, highlight.points[i], op, scl)
