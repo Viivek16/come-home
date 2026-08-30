@@ -11,15 +11,14 @@ import GoogleButton from '../../ui/GoogleButton';
 import { reminders } from '../../lib/reminders';
 import {
   getHistory,
-  clearHistory,
   getReflections,
-  clearReflections,
   getJournal,
   getPresence,
   type HistoryEntry,
   type FlowVisit,
   type Reflection,
   type JournalEntry,
+  type Theme,
 } from '../../lib/storage';
 import { feelingLabel } from '../../data/feelings';
 import type { Checkin } from '../../store/session';
@@ -50,7 +49,6 @@ export default function ProfileTab() {
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [presence, setPresence] = useState<string[]>([]);
-  const [confirmClear, setConfirmClear] = useState(false);
   const [reminderDenied, setReminderDenied] = useState(false);
   useProgrammeProgress();
 
@@ -76,20 +74,6 @@ export default function ProfileTab() {
     getJournal().then(setJournal);
     getPresence().then(setPresence);
   }, []);
-
-  const doClear = async () => {
-    if (!confirmClear) {
-      setConfirmClear(true);
-      return;
-    }
-    await clearHistory();
-    await clearReflections();
-    setHistory([]);
-    setReflections([]);
-    setConfirmClear(false);
-    // Journal pages are personal writing — they're removed one at a time, gently,
-    // inside the journal itself, never wiped by this reset.
-  };
 
   // The trail = check-ins + reflections, gathered into one gentle time-line.
   type Moment = { ts: number; text: string };
@@ -237,31 +221,13 @@ export default function ProfileTab() {
           Settings
         </div>
         <div className="glass mt-3" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
-          <Row label="Reduce motion">
-            <Switch
-              on={prefs.reduceMotion}
-              label="Reduce motion"
-              onToggle={() => prefsStore.setReduceMotion(!prefs.reduceMotion)}
-            />
-          </Row>
-          <Row label="Voice">
-            <span style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}>Default</span>
-          </Row>
-          <Row label="Theme">
-            <span style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}>Still water</span>
-          </Row>
-          <Row label="Your data" last>
-            <button
-              onClick={doClear}
-              style={{ color: confirmClear ? 'var(--gold)' : 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}
-            >
-              {confirmClear ? 'Tap again to clear' : 'Clear history'}
-            </button>
+          <Row label="Theme" last>
+            <ThemeChoice value={prefs.theme} onChange={(t) => prefsStore.setTheme(t)} />
           </Row>
         </div>
 
         <p style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-xs)', marginTop: 12 }}>
-          Everything you share stays on this device.
+          Sets the mood of the water — Still water’s teal calm, or a warmer amber. Everything you share stays on this device.
         </p>
 
         <AccountSection />
@@ -277,6 +243,7 @@ export default function ProfileTab() {
  */
 function AccountSection() {
   const { user, loading } = useAuth();
+  const [confirming, setConfirming] = useState(false);
 
   if (!isSupabaseConfigured || loading) return null;
 
@@ -293,26 +260,55 @@ function AccountSection() {
   }
 
   // Signed in → account card + sign out. (Name is collected on the login screen.)
+  // Sign out asks first: a gentle confirm slides out from below the tile.
   return (
-    <div className="glass mt-6 flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
-      {user.avatarUrl ? (
-        <img src={user.avatarUrl} alt="" width={40} height={40} style={{ borderRadius: 999 }} referrerPolicy="no-referrer" />
-      ) : (
-        <span className="grid shrink-0 place-items-center" style={{ width: 40, height: 40, borderRadius: 999, background: 'rgba(232,201,155,0.14)', color: 'var(--gold)' }}>
-          {(user.name || 'You').slice(0, 1).toUpperCase()}
-        </span>
-      )}
-      <span className="flex-1 overflow-hidden">
-        <span style={{ display: 'block', color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{user.name || 'Signed in'}</span>
-        {user.email && (
-          <span className="eyebrow" style={{ display: 'block', marginTop: 2, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {user.email}
+    <div className="mt-6">
+      <div className="glass flex items-center gap-3 px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="" width={40} height={40} style={{ borderRadius: 999 }} referrerPolicy="no-referrer" />
+        ) : (
+          <span className="grid shrink-0 place-items-center" style={{ width: 40, height: 40, borderRadius: 999, background: 'rgba(232,201,155,0.14)', color: 'var(--gold)' }}>
+            {(user.name || 'You').slice(0, 1).toUpperCase()}
           </span>
         )}
-      </span>
-      <button onClick={() => signOut()} style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}>
-        Sign out
-      </button>
+        <span className="flex-1 overflow-hidden">
+          <span style={{ display: 'block', color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{user.name || 'Signed in'}</span>
+          {user.email && (
+            <span className="eyebrow" style={{ display: 'block', marginTop: 2, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user.email}
+            </span>
+          )}
+        </span>
+        <button
+          onClick={() => setConfirming((v) => !v)}
+          aria-expanded={confirming}
+          style={{ color: confirming ? 'var(--gold)' : 'var(--ink-muted)', fontSize: 'var(--t-sm)' }}
+        >
+          Sign out
+        </button>
+      </div>
+
+      {confirming && (
+        <Reveal>
+          <div className="glass mt-2 px-5 py-4" style={{ borderRadius: 'var(--radius-card)' }}>
+            <div style={{ color: 'var(--ink)', fontSize: 'var(--t-sm)' }}>Sign out of this device?</div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button
+                onClick={() => signOut()}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 999, color: 'var(--gold)', background: 'rgba(232,201,155,0.14)', border: '1px solid rgba(232,201,155,0.4)', fontSize: 'var(--t-sm)' }}
+              >
+                Sign out
+              </button>
+              <button
+                onClick={() => setConfirming(false)}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 999, color: 'var(--ink-muted)', background: 'transparent', border: '1px solid var(--hairline)', fontSize: 'var(--t-sm)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Reveal>
+      )}
     </div>
   );
 }
@@ -421,6 +417,40 @@ function Row({ label, children, last = false }: { label: string; children: React
     >
       <span style={{ color: 'var(--ink)', fontSize: 'var(--t-md)' }}>{label}</span>
       {children}
+    </div>
+  );
+}
+
+/** Two-way atmosphere picker — the whole app (water + bg) re-tints on tap. */
+function ThemeChoice({ value, onChange }: { value: Theme; onChange: (t: Theme) => void }) {
+  const opts: { id: Theme; label: string }[] = [
+    { id: 'still', label: 'Still water' },
+    { id: 'warm', label: 'Warm' },
+  ];
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      {opts.map((o) => {
+        const on = value === o.id;
+        return (
+          <button
+            key={o.id}
+            onClick={() => onChange(o.id)}
+            aria-pressed={on}
+            className="transition-transform duration-300 active:scale-[0.97]"
+            style={{
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontSize: 'var(--t-xs)',
+              color: on ? 'var(--gold)' : 'var(--ink-muted)',
+              background: on ? 'rgba(232,201,155,0.14)' : 'transparent',
+              border: `1px solid ${on ? 'rgba(232,201,155,0.4)' : 'var(--hairline)'}`,
+              transitionTimingFunction: 'var(--ease-calm)',
+            }}
+          >
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -35,11 +35,15 @@ export type Onboarding = {
   frequency: string; // "How regularly do you meditate?" — '' | daily | weekly | rarely | never
   struggling: string[]; // "Are you struggling with something?" — feeling ids
 };
+/** Atmosphere theme (§3). 'still' = the default teal Still Water; 'warm' = an
+ *  amber/sand alternate. Recolors both the WebGL water and the CSS bg tokens. */
+export type Theme = 'still' | 'warm';
 export type Prefs = {
   name: string;
   reduceMotion: boolean;
   voice: string;
   ambientMuted: boolean;
+  theme: Theme;
   reminder: Reminder;
   onboarding: Onboarding;
 };
@@ -51,6 +55,7 @@ export const DEFAULT_PREFS: Prefs = {
   reduceMotion: false,
   voice: 'default',
   ambientMuted: true,
+  theme: 'still',
   reminder: { enabled: false, time: '21:00' },
   onboarding: { triedBefore: null, frequency: '', struggling: [] },
 };

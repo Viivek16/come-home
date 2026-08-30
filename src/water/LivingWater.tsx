@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { breathValue } from '../breath/useBreath';
 import { prefersReduced, useReducedMotion } from '../lib/motion';
-import { targetParams, stillWaterGradient, isWaterPaused, subscribeWaterPause, type WaterParams } from '../store/water';
+import { targetParams, stillWaterGradient, isWaterPaused, subscribeWaterPause, useWaterTheme, type WaterParams } from '../store/water';
 import { useTimeBand } from '../lib/timeBand';
 
 /**
@@ -67,6 +67,7 @@ export default function LivingWater() {
   const [css, setCss] = useState(false); // true → CSS gradient-water fallback
   const reduced = useReducedMotion(); // re-inits the layer on a runtime toggle
   const band = useTimeBand(); // reactive time-of-day palette (§Phase B)
+  useWaterTheme(); // re-render the CSS fallback when the theme changes (WebGL eases live)
 
   useEffect(() => {
     // Reduced motion → no WebGL loop; a static, band-correct gradient renders below.

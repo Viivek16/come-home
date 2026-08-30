@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { currentBand, type TimeBand } from '../lib/timeBand';
+import type { Theme } from '../lib/storage';
 
 /**
  * Living Water target params (§4, §Phase B). Split into two axes:
@@ -43,8 +44,43 @@ const BAND_WATER: Record<TimeBand, BandPalette> = {
   night:   { deep: [0.012, 0.032, 0.048], top: [0.03, 0.09, 0.12],   glint: [0.72, 0.80, 0.92] }, // near-black teal, cool moon-glow
 };
 
+/**
+ * Warm alternate (Profile → Theme). Same luminance structure as Still Water so
+ * glass, ink and the gold accent stay legible — only the hue swings to amber/sand
+ * (r ≥ g ≥ b). Same band progression: rose-gold dawn → clear amber midday → deep
+ * gold hour → ember dusk → near-black warm night. No red, only warm gold (§5).
+ */
+const WARM_WATER: Record<TimeBand, BandPalette> = {
+  dawn:    { deep: [0.10, 0.060, 0.050],  top: [0.24, 0.150, 0.115], glint: [0.98, 0.82, 0.70] }, // rose-gold sand, low light
+  morning: { deep: [0.12, 0.070, 0.048],  top: [0.30, 0.185, 0.100], glint: [0.98, 0.85, 0.62] }, // warm amber, brightening
+  midday:  { deep: [0.15, 0.095, 0.055],  top: [0.33, 0.215, 0.120], glint: [0.99, 0.87, 0.66] }, // clear amber, high light
+  golden:  { deep: [0.135, 0.078, 0.045], top: [0.30, 0.190, 0.110], glint: [0.99, 0.80, 0.52] }, // deep gold hour
+  dusk:    { deep: [0.11, 0.060, 0.058],  top: [0.23, 0.130, 0.130], glint: [0.93, 0.75, 0.72] }, // ember → rose
+  night:   { deep: [0.045, 0.028, 0.020], top: [0.115, 0.070, 0.045], glint: [0.90, 0.80, 0.66] }, // near-black warm, amber-moon
+};
+
+const WATER: Record<Theme, Record<TimeBand, BandPalette>> = { still: BAND_WATER, warm: WARM_WATER };
+
+let theme: Theme = 'still';
 let group: DepthGroup = 'opening';
 const listeners = new Set<() => void>();
+
+/** Apply the user's theme choice (from persisted prefs). The running water eases
+ *  toward the new palette over ~1.2s since the RAF loop reads targetParams() live. */
+export function setWaterTheme(next: Theme) {
+  if (next === theme) return;
+  theme = next;
+  listeners.forEach((l) => l());
+}
+
+/** Reactive theme — re-renders the CSS fallback (which isn't RAF-driven). */
+export function useWaterTheme(): Theme {
+  return useSyncExternalStore(
+    (l) => (listeners.add(l), () => listeners.delete(l)),
+    () => theme,
+    () => theme,
+  );
+}
 
 export function setDepth(next: DepthGroup) {
   if (next === group) return;
@@ -55,16 +91,17 @@ export function setDepth(next: DepthGroup) {
 /** Imperative read for the render loop: motion from depth, palette from the band. */
 export const targetParams = (): WaterParams => {
   const d = DEPTH[group];
-  const w = BAND_WATER[currentBand()];
+  const w = WATER[theme][currentBand()];
   return { intensity: d.intensity, speed: d.speed, deep: [...w.deep], top: [...w.top], glint: [...w.glint] };
 };
 
 const to255 = (c: [number, number, number]) => `rgb(${c.map((x) => Math.round(x * 255)).join(', ')})`;
 
-/** Static, band-correct Still-Water gradient for the reduced-motion / no-WebGL
- *  fallback (§Phase B). Same palette the shader tints toward, just not animated. */
+/** Static, band-correct water gradient for the reduced-motion / no-WebGL fallback
+ *  and the atmospheric cover tints (§Phase B). Honors the active theme — the same
+ *  palette the shader tints toward, just not animated. */
 export function stillWaterGradient(band: TimeBand): string {
-  const w = BAND_WATER[band];
+  const w = WATER[theme][band];
   const bottom: [number, number, number] = [w.deep[0] * 0.6, w.deep[1] * 0.6, w.deep[2] * 0.6];
   return `linear-gradient(180deg, ${to255(w.top)} 0%, ${to255(w.deep)} 58%, ${to255(bottom)} 100%)`;
 }

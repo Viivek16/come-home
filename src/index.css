@@ -42,6 +42,15 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Warm theme (Profile → Theme). Only the atmosphere bg tokens swing warm; ink,
+   gold and the glass fills read fine on a warm-dark base, so they stay put. The
+   WebGL water gets its own warm palette in store/water.ts. */
+:root[data-theme='warm'] {
+  --bg-deep: #1c1108; /* warm sand-dark base */
+  --bg-water-top: #3a2415; /* lit amber */
+  --bg-water-bottom: #0f0704;
+}
+
 html {
   height: 100%;
 }

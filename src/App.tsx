@@ -15,7 +15,7 @@ import FlowContainer from './flow/FlowContainer';
 import PlayerHost from './audio/PlayerHost';
 import { app, useView } from './store/app';
 import { onboardingDone, markPresence } from './lib/storage';
-import { setDepth } from './store/water';
+import { setDepth, setWaterTheme } from './store/water';
 import { usePrefs } from './store/prefs';
 import { setReduceMotionPref } from './lib/motion';
 import { ambient } from './audio/ambient';
@@ -31,7 +31,7 @@ import { useAppHistory } from './nav/history';
 export default function App() {
   const view = useView();
   const { user } = useAuth();
-  const { reduceMotion, ambientMuted, reminder } = usePrefs();
+  const { reduceMotion, ambientMuted, theme, reminder } = usePrefs();
 
   // Keep hardware/browser Back inside the app (only Home-screen Back exits).
   useAppHistory();
@@ -45,6 +45,12 @@ export default function App() {
   useEffect(() => {
     setReduceMotionPref(reduceMotion);
   }, [reduceMotion]);
+
+  // Apply the persisted atmosphere theme: re-tint the water + swap CSS bg tokens.
+  useEffect(() => {
+    setWaterTheme(theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // Ambient bed: honor the mute pref, and start it on the first user gesture.
   useEffect(() => {

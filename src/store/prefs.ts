@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { loadPrefs, savePrefs, type Prefs, type Reminder, type Onboarding } from '../lib/storage';
+import { loadPrefs, savePrefs, type Prefs, type Reminder, type Onboarding, type Theme } from '../lib/storage';
 
 /** Reactive user prefs (§8), persisted to localStorage on every change. */
 let prefs = loadPrefs();
@@ -17,6 +17,7 @@ export const prefsStore = {
   setReduceMotion: (reduceMotion: boolean) => commit({ reduceMotion }),
   setVoice: (voice: string) => commit({ voice }),
   setAmbientMuted: (ambientMuted: boolean) => commit({ ambientMuted }),
+  setTheme: (theme: Theme) => commit({ theme }),
   setReminder: (reminder: Reminder) => commit({ reminder }),
   setOnboarding: (onboarding: Onboarding) => commit({ onboarding }),
 };
