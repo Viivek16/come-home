@@ -1,55 +1,24 @@
-import { useState } from 'react';
 import { Timer, Wind, Heart } from 'lucide-react';
 import Reveal from '../../ui/Reveal';
 import PracticeCard from '../../ui/PracticeCard';
-import CoverCard from '../../ui/CoverCard';
-import HeartButton from '../../ui/HeartButton';
-import GradientIcon, { type GradientIconName } from '../../ui/GradientIcon';
-import { session } from '../../store/session';
-import { app } from '../../store/app';
+import GradientIcon from '../../ui/GradientIcon';
 import { enterFlow } from '../../store/flow';
 import { openTool } from '../../store/tool';
 import { openSanctuary } from '../../sanctuary/Sanctuary';
 import { useFavorites } from '../../store/favorites';
-import { LIBRARY_ITEMS, inTimeBucket, TIME_BUCKETS, type TimeBucket } from '../../data/library';
+import { LIBRARY_ITEMS } from '../../data/library';
 import { FEELINGS } from '../../data/feelings';
 import { PATHS } from '../../data/paths';
-import { loadLibFilter, saveLibFilter, type LibraryFilter } from '../../lib/storage';
-import { stillWaterGradient } from '../../store/water';
-import { useTimeBand } from '../../lib/timeBand';
 
 /**
- * §6 Library (§Phase D). Browse the real content by felt-state (our categories are
- * the arrival states — no invented empty categories) and by length; both filters
- * combine over the real data with a calm empty state. Atmospheric cards throughout.
- * Saved sessions live in the Sanctuary view.
+ * §6 Library (§Phase D). Browse the real content by felt-state — our categories are
+ * the arrival states (no invented empty categories). Tapping a feeling launches the
+ * same companion flow as the Support tab. Saved sessions live in the Sanctuary view.
  */
 export default function LibraryTab() {
-  const [filter, setFilter] = useState<LibraryFilter>(() => loadLibFilter());
   const favs = useFavorites();
-  const band = useTimeBand();
-  const cover = stillWaterGradient(band);
-
-  const update = (f: Partial<LibraryFilter>) =>
-    setFilter((cur) => {
-      const next = { ...cur, ...f };
-      saveLibFilter(next);
-      return next;
-    });
-  const anyFilter = filter.time !== 'all' || filter.feeling !== 'all';
-  const clear = () => update({ time: 'all', feeling: 'all' });
-
-  const filtered = LIBRARY_ITEMS.filter(
-    (l) => inTimeBucket(l, filter.time as TimeBucket) && (filter.feeling === 'all' || l.feeling === filter.feeling),
-  );
 
   const savedCount = LIBRARY_ITEMS.filter((l) => favs.has(`lib:${l.id}`)).length + PATHS.filter((p) => favs.has(`path:${p.id}`)).length;
-
-  const openLibrary = () => {
-    session.reset();
-    session.pickPath('more-15');
-    app.setView('session');
-  };
 
   return (
     <div className="screen">
@@ -94,122 +63,32 @@ export default function LibraryTab() {
           </div>
         </Reveal>
 
-        {/* Browse by felt-state — category chips with atmospheric cover thumbnails. */}
-        <Reveal delay={0.22}>
-          <div className="flex items-center justify-between" style={{ marginTop: 26, marginBottom: 10 }}>
-            <span className="eyebrow">How are you feeling today?</span>
-            {anyFilter && (
-              <button onClick={clear} className="eyebrow" style={{ color: 'var(--gold)' }} aria-label="Clear filters">
-                Clear
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-            <CategoryChip label="All" icon="sun" cover={cover} on={filter.feeling === 'all'} onClick={() => update({ feeling: 'all' })} />
-            {FEELINGS.map((f) => (
-              // Tapping a feeling launches the same companion flow as the Support tab.
-              <CategoryChip key={f.id} label={f.label} icon={f.icon} cover={cover} on={false} onClick={() => enterFlow(f.id)} />
-            ))}
-          </div>
-        </Reveal>
-
-        {/* Duration — combines with the feeling above. */}
-        <Reveal delay={0.28}>
-          <div className="eyebrow" style={{ marginTop: 22, marginBottom: 10 }}>
-            How much time
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {TIME_BUCKETS.map((b) => (
-              <FilterChip key={b.id} on={filter.time === b.id} onClick={() => update({ time: b.id })}>
-                {b.label}
-              </FilterChip>
-            ))}
-          </div>
-        </Reveal>
-
-        {/* Results — atmospheric cards; calm, non-judgmental empty state. */}
-        {filtered.length > 0 ? (
-          <div className="mt-5 flex flex-col gap-4">
-            {filtered.map((l, i) => (
-              <Reveal key={l.id} delay={0.32 + i * 0.05}>
-                <CoverCard
-                  cover={cover}
-                  tag={`Guided · ${l.length}`}
-                  title={l.title}
-                  sub={l.feeling}
-                  onClick={openLibrary}
-                  corner={<HeartButton favKey={`lib:${l.id}`} label={l.title} />}
-                />
-              </Reveal>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-5" style={{ color: 'var(--ink-muted)', fontSize: 'var(--t-md)', lineHeight: 1.5 }}>
-            Nothing here for that just now. Try a longer time, or{' '}
-            <button onClick={clear} style={{ color: 'var(--gold)' }}>
-              see everything
-            </button>
-            .
-          </p>
-        )}
+        {/* Browse by felt-state — the six arrival states as calm glass tiles, mirroring
+            the Support grid. Tapping one launches the same companion flow. */}
+        <div style={{ marginTop: 26 }}>
+          <Reveal delay={0.22}>
+            <div className="eyebrow" style={{ marginBottom: 12 }}>
+              How are you feeling today?
+            </div>
+          </Reveal>
+          <Reveal delay={0.26}>
+            <div className="grid grid-cols-2 gap-3">
+              {FEELINGS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => enterFlow(f.id)}
+                  className="glass flex flex-col items-center justify-center gap-2 px-3 py-4 text-center transition-transform duration-300 active:scale-[0.98]"
+                  style={{ minHeight: 88, borderRadius: 'var(--radius-card)', transitionTimingFunction: 'var(--ease-calm)' }}
+                >
+                  <GradientIcon name={f.icon} size={24} />
+                  <span style={{ color: 'var(--ink)', fontSize: 'var(--t-sm)', lineHeight: 1.25 }}>{f.label}</span>
+                </button>
+              ))}
+            </div>
+          </Reveal>
+        </div>
       </div>
     </div>
-  );
-}
-
-function CategoryChip({ label, icon, cover, on, onClick }: { label: string; icon: GradientIconName; cover: string; on: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={on}
-      className="shrink-0 transition-transform duration-300 active:scale-[0.97]"
-      style={{ width: 92, textAlign: 'center', transitionTimingFunction: 'var(--ease-calm)' }}
-    >
-      <span
-        className="grid place-items-center"
-        style={{
-          height: 60,
-          borderRadius: 14,
-          background: cover,
-          border: `1px solid ${on ? 'rgba(232,201,155,0.55)' : 'var(--hairline)'}`,
-          boxShadow: on ? '0 0 0 1px rgba(232,201,155,0.35), 0 0 18px rgba(232,201,155,0.16)' : 'none',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <span
-          aria-hidden
-          style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 80% 15%, rgba(232,201,155,0.22), transparent 55%)' }}
-        />
-        <GradientIcon name={icon} size={24} />
-      </span>
-      <span
-        className="eyebrow"
-        style={{ display: 'block', marginTop: 6, color: on ? 'var(--gold)' : 'var(--ink-muted)', textTransform: 'none', letterSpacing: 0, fontSize: 'var(--t-xs)' }}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function FilterChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={on}
-      className="transition-transform duration-300 active:scale-[0.97]"
-      style={{
-        padding: '7px 14px',
-        borderRadius: 999,
-        fontSize: 'var(--t-sm)',
-        color: on ? 'var(--gold)' : 'var(--ink-muted)',
-        background: on ? 'rgba(232,201,155,0.14)' : 'transparent',
-        border: `1px solid ${on ? 'rgba(232,201,155,0.4)' : 'var(--hairline)'}`,
-        transitionTimingFunction: 'var(--ease-calm)',
-      }}
-    >
-      {children}
-    </button>
   );
 }
